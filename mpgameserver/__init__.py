@@ -1,5 +1,5 @@
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from mpgameserver.auth import Auth
 from mpgameserver.client import UdpClient

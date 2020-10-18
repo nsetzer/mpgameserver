@@ -15,7 +15,7 @@ classifiers = [
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX',
-    'License :: OSI Approved :: MIT License',
+    'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)',
     'Programming Language :: Python :: 3.8',
 
 ]
@@ -30,7 +30,7 @@ install_requires=[
   'twisted>=20.3.0',
 ]
 
-version = "0.1.0"
+version = "0.1.1"
 url = 'https://github.com/nsetzer/mpgameserver'
 download_url = "%s/archive/%s.tar.gz" % (url, version)
 
