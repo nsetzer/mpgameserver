@@ -1,7 +1,7 @@
 
 import unittest
 from mpgameserver import crypto
-
+import binascii
 
 class CryptoTestCase(unittest.TestCase):
 
@@ -130,6 +130,16 @@ class CryptoTestCase(unittest.TestCase):
 
         key.getPublicKey().verify(signature, data)
 
+    def test_ecc_asym(self):
+        key = crypto.EllipticCurvePrivateKey.new()
+        shared_key1, peer_pubkey = crypto.ecc_asym_encrypt_key(key.getPublicKey())
+        shared_key2 = crypto.ecc_asym_decrypt_key(key, peer_pubkey)
+
+
+        str1 = binascii.hexlify(shared_key1)
+        str2 = binascii.hexlify(shared_key2)
+
+        self.assertEqual(str1, str2)
 
 def main():
     unittest.main()

@@ -250,6 +250,9 @@ class EllipticCurvePrivateKey(object):
     def __repr__(self):
         return private_key_repr(self.key)
 
+    def curve(self):
+        return self.key.curve
+
     def getBytes(self):
         return self.key.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
 
@@ -321,6 +324,27 @@ class EllipticCurvePublicKey(object):
     def __repr__(self):
         return public_key_repr(self.key)
 
+    def curve(self):
+        return self.key.curve
+
+    def x(self):
+        return self.key.public_numbers().x.to_bytes(32, 'little')
+
+    def y(self):
+        return self.key.public_numbers().y.to_bytes(32, 'little')
+
+    def compress(self):
+        """
+        compress elliptic curve public key as defined in ANSI X9.62 section 4.3.6
+        """
+        return self.key.public_bytes(Encoding.X962, PublicFormat.CompressedPoint)
+
+    def getEncryptionKey(self):
+        sha = hashlib.sha256()
+        sha.update(self.x())
+        sha.update(self.y())
+        return sha.digest()
+
     def getBytes(self):
         return self.key.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
 
@@ -344,8 +368,6 @@ class EllipticCurvePublicKey(object):
 
         NOT FOR PRODUCTION USE
         """
-
-
         key = load_pem_public_key(default_root_public_key.encode("utf-8"), backend=default_backend())
         return EllipticCurvePublicKey(key)
 
@@ -360,6 +382,15 @@ class EllipticCurvePublicKey(object):
         return EllipticCurvePublicKey(
             load_der_public_key(der,
                 backend=default_backend()))
+
+    @staticmethod
+    def uncompress(curve: ec.EllipticCurve, data: bytes):
+        """
+        load a compressed elliptic curve
+        """
+        key = ec.EllipticCurvePublicKey.from_encoded_point(curve, data)
+        return EllipticCurvePublicKey(key)
+
 
 
 """
@@ -428,3 +459,52 @@ def _loadKeyFromFile(file_stream):
             key = EllipticCurvePrivateKey.fromPEM(file_stream.read())
     return key
 
+"""
+ECC Asymmetric Encryption
+
+https://cryptobook.nakov.com/asymmetric-key-ciphers/ecc-encryption-decryption
+
+
+"""
+
+def ecc_asym_encrypt_key(publicKey: EllipticCurvePublicKey) -> (bytes, bytes):
+    """
+
+    Derive a new shared secret key using a given public key.
+    The key can be used by a peer to encrypt a message that can only
+    be decrypted by the owner of the corresponding private key.
+    The return value is the new shared secret key and the peer public key
+    which can be used to derive the shared secret key again.
+
+
+    public_key: an ecc public key
+    returns a 2-tuple (shared_key, compressed_public_key)
+    """
+    peer_key = EllipticCurvePrivateKey.new()
+    shared_key = peer_key.key.exchange(ec.ECDH(), publicKey.key)
+    return (shared_key, peer_key.getPublicKey().compress())
+
+def ecc_asym_decrypt_key(privateKey: EllipticCurvePrivateKey, peerCompressedPublicKey: bytes) -> bytes:
+
+    """
+    Derive a shared secret using the private key and a compressed peer
+    public key. The inputs to this function are the corresponding private
+    key to the public key given to ecc_asym_encrypt_key, and the public
+    key that that function returns.
+
+    """
+    peer_pubkey = EllipticCurvePublicKey.uncompress(
+        ec.SECP256R1(), peerCompressedPublicKey)
+
+    return privateKey.key.exchange(ec.ECDH(), peer_pubkey.key)
+
+def main():
+
+    key = EllipticCurvePrivateKey.new()
+    shared_key1, peer_pubkey = ecc_asym_encrypt_key(key.getPublicKey())
+    shared_key2 = ecc_asym_decrypt_key(key, peer_pubkey)
+    print(binascii.hexlify(shared_key1))
+    print(binascii.hexlify(shared_key2))
+
+if __name__ == '__main__':
+    main()

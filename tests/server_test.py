@@ -152,7 +152,6 @@ class Server1TestCase(unittest.TestCase):
 
         timedout=None
         def callback(success):
-            print("o call")
             nonlocal timedout
             timedout = not success
 
