@@ -270,8 +270,45 @@ class UdpServerThread(Thread):
                 self.update_stats()
                 prev_report = now
 
-            # alpha := 1 - exp(-1/60)
-            self.spt += (0.01653) * (p5-p1 - self.spt)
+            # Simple Low Pass Filter (exponentially weighted moving average)
+            # used for calculating the average number of seconds per tick
+            # Ideally this would be steady, and equal to self.ctxt.interval
+            #
+            # let Fs = 60 (for example)
+            #     delta_t = 1/Fs
+            #
+            # filter is defined by:
+            #   y[i] = y[i-1] + a * (x[i] - y[i-1])
+            #   y[i] = (1-a) * y[i-1] + a * x[i]
+            #
+            # cutoff frequency
+            #   Fc := Fs*a / ((1 - a)*2*pi)
+            #
+            # alpha
+            #   a := 2*pi*Fc / (Fs + 2*pi*Fc)
+            #   a := 0.5*pi*Fs / (1+0.5*pi)Fs
+            #   a := 0.5*pi / (1+0.5*pi)
+            #
+            # alpha should be between 0 and 1.
+            #   when close to one, dampening of previously seen values is quick
+            #   when close to zero, dampening is slow
+            #
+            # at 60Hz (60 ticks per second) the Nyquist frequency is 30Hz
+            # using half the Nyquist frequency (15) should result in a
+            # filter that biases towards recent samples
+            #
+            #   a(Fs=60, Fc=15) := 2*pi*Fc / (Fs + 2*pi*Fc)
+            #   a(Fs=60, Fc=15) := 2*pi*(Fs/4) / (Fs + 2*pi*(Fs/4))
+            #   a(Fs=60, Fc=15) := 2*pi*(Fs/4) / ((1+ 2*pi*/4)*Fs)
+            #   a(Fs=60, Fc=15) := 0.5*pi*Fs / (1+0.5*pi)Fs
+            #   a(Fs=60, Fc=15) := 0.5*pi / (1+0.5*pi)
+            #   a(Fs=60, Fc=15) := 0.6110154703516573
+            #
+            # previously, the value was
+            #   a := 1 - exp(-1/60)
+            # this results in very slow dampening
+            #
+            self.spt += (0.6110154703516573) * (p5-p1 - self.spt)
 
         self.ctxt.log.info("server main loop exited")
 
