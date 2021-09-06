@@ -266,6 +266,8 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
 
   The default MTU is 1500 bytes. Values larger than this will result in packets that are likely to not be delivered. The MTU can be decreased if the network is dropping packets.
 
+  The UDP header size is assumed to be 28 bytes.
+
   
 
 

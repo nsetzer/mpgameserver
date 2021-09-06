@@ -593,7 +593,6 @@ class MainScene(GameScene):
         for wgt in self.widgets:
             wgt.update(delta_t)
 
-
 class ExceptionScene(GameScene):
     def __init__(self):
         super(ExceptionScene, self).__init__()

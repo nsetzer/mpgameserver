@@ -16,7 +16,7 @@ into a pygame gui.
 
 
 * [EventHandler](#eventhandler)
-* [EventHandler::Client](#eventhandler::client)
+* [EventHandler.Client](#eventhandler.client)
 * [ServerContext](#servercontext)
 * [TwistedServer](#twistedserver)
 * [GuiServer](#guiserver)
@@ -88,7 +88,7 @@ The EventHandler events are guaranted to always be run from the same thread.
   
 
 ---
-## :large_blue_diamond: EventHandler::Client
+## :large_blue_diamond: EventHandler.Client
 Many of the events in EventHandler receive a client. That client implements the public API defined here.
 
 
@@ -98,7 +98,7 @@ Many of the events in EventHandler receive a client. That client implements the 
 
 **`addr`**: the client remote address. a 2-tuple: (host, port). This is unique per client, but may also contain PII and should not be sent to other clients
 
-**`latency`**: this current connection latency (actually round trip time: the average time from sending a packet until it is acked.)
+**`latency`**: this current connection latency (average time it takes for the remote to receive the datagram)
 
 **`log`**: an instance of logging.Logger which logs with client context
 
@@ -119,7 +119,7 @@ Many of the events in EventHandler receive a client. That client implements the 
 
   * **:arrow_forward: `retry:`** the RetryMode, default to RetryMode.NONE
 
-  * **:arrow_forward: `callback:`** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise. If retry is negative then the callback will be called when the message is finally acked.
+  * **:arrow_forward: `callback:`** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise.
 
   
 
@@ -127,7 +127,7 @@ Many of the events in EventHandler receive a client. That client implements the 
 
   * **:arrow_forward: `payload:`** 
 
-  * **:arrow_forward: `callback:`** 
+  * **:arrow_forward: `callback:`** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise.
 
   
 
@@ -221,6 +221,18 @@ a headless server implementation
 
 #### Methods:
 
+* :small_blue_diamond: **`listenTCP`**`(self, router, addr, privkey=None, cert=None)` - Enable a TCP listener. Must be called prior to run.
+
+  * **:arrow_forward: `router:`** an router instance containing mapped endpoints
+
+  * **:arrow_forward: `addr:`** a 2-tuple (host: str, port: int)
+
+  * **:arrow_forward: `privkey:`** the path to a ssl private key
+
+  * **:arrow_forward: `cert:`** the path to a ssl full chain certificate (pem file)
+
+  
+
 * :small_blue_diamond: **`run`**`(self)` - run the server.
 
   
@@ -262,6 +274,18 @@ A server implementation which displays run time metrics in a pygame interface
 #### Methods:
 
 * :small_blue_diamond: **`init`**`(self)` - init pygame
+
+  
+
+* :small_blue_diamond: **`listenTCP`**`(self, router, addr, privkey=None, cert=None)` - Enable a TCP listener. Must be called prior to run.
+
+  * **:arrow_forward: `router:`** an router instance containing mapped endpoints
+
+  * **:arrow_forward: `addr:`** a 2-tuple (host: str, port: int)
+
+  * **:arrow_forward: `privkey:`** the path to a ssl private key
+
+  * **:arrow_forward: `cert:`** the path to a ssl full chain certificate (pem file)
 
   
 

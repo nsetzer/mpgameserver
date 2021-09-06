@@ -7,15 +7,16 @@ import logging
 import math
 import time
 
-from mpgameserver import EventHandler, TwistedServer, GuiServer, Timer, Serializable, \
-    ServerContext, EllipticCurvePrivateKey, RetryMode
+from mpgameserver import EventHandler, TwistedServer, GuiServer, ServerContext, \
+    Timer, Serializable, EllipticCurvePrivateKey, RetryMode, \
+    ServerMessageDispatcher, server_event
 
 from .shipcommon import ShipPhase, ShipState, ShipRemove, ShipUpdate, ShipDestroy, \
     ShipCreateBullet, Bullet, collide_triangle_point, ShipTriangle
 
-class ShipHandler(EventHandler):
+class GameResource(object):
     def __init__(self):
-        super(ShipHandler, self).__init__()
+        super(GameResource, self).__init__()
 
         self.players = {} # addr -> client
         self.player_state = {} # addr -> state
@@ -77,38 +78,6 @@ class ShipHandler(EventHandler):
         self.checkCollide()
 
         self.checkRevive()
-
-    def handle_message(self, client, seqnum, payload):
-
-        msg = Serializable.loadb(payload)
-
-        if msg.type_id == ShipState.type_id:
-
-            if client.addr in self.player_state:
-                curseq, curstate = self.player_state[client.addr]
-                if seqnum.newer_than(curseq):
-                    self.player_state[client.addr] = (seqnum, msg)
-                else:
-                    client.log.info("dropping out of order message received: %d current: %d", seqnum, curseq)
-
-            else:
-                self.player_state[client.addr] = (seqnum, msg)
-
-            for other in self.players.values():
-                if other is client:
-                    continue
-                other.send(ShipUpdate(states=[msg]).dumpb(), retry=RetryMode.NONE)
-
-        elif msg.type_id == ShipCreateBullet.type_id:
-            # received a request from a client to create a bullet
-            # validate the request, and if valid send a reply to all clients
-            # to create the bullet.
-            bullet = Bullet((msg.xpos, msg.ypos), msg.angle, msg.charge)
-            bullet.collisions = set([client.token])
-            self.bullets.append(bullet)
-
-            for other in self.players.values():
-                other.send(payload, retry=RetryMode.BEST_EFFORT)
 
     def updateBullets(self, delta_t):
 
@@ -180,6 +149,60 @@ class ShipHandler(EventHandler):
 
             del self.players_dead[addr]
 
+    @server_event
+    def onShipState(self, client, seqnum, msg: ShipState):
+
+        if client.addr in self.player_state:
+            curseq, curstate = self.player_state[client.addr]
+            if seqnum.newer_than(curseq):
+                self.player_state[client.addr] = (seqnum, msg)
+            else:
+                client.log.info("dropping out of order message received: %d current: %d", seqnum, curseq)
+
+        else:
+            self.player_state[client.addr] = (seqnum, msg)
+
+        for other in self.players.values():
+            if other is client:
+                continue
+            other.send(ShipUpdate(states=[msg]).dumpb(), retry=RetryMode.NONE)
+
+    @server_event
+    def onShipCreateBullet(self, client, seqnum, msg: ShipCreateBullet):
+
+            # received a request from a client to create a bullet
+            # validate the request, and if valid send a reply to all clients
+            # to create the bullet.
+            bullet = Bullet((msg.xpos, msg.ypos), msg.angle, msg.charge)
+            bullet.collisions = set([client.token])
+            self.bullets.append(bullet)
+
+            payload = msg.dumpb()
+            for other in self.players.values():
+                other.send(payload, retry=RetryMode.BEST_EFFORT)
+
+class ShipHandler(EventHandler):
+    def __init__(self):
+        super(ShipHandler, self).__init__()
+
+        self.dispatcher = ServerMessageDispatcher()
+        self.resource_game = GameResource()
+        self.dispatcher.register(self.resource_game)
+
+    def connect(self, client):
+        self.resource_game.connect(client)
+
+    def disconnect(self, client):
+        self.resource_game.disconnect(client)
+
+    def update(self, delta_t):
+        self.resource_game.update(delta_t)
+
+    def handle_message(self, client, seqnum, payload):
+
+        msg = Serializable.loadb(payload)
+
+        self.dispatcher.dispatch(client, seqnum, msg)
 
 def main():
 

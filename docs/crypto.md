@@ -80,6 +80,7 @@ This class implements methods for performing basic Elliptic Curve operations, su
 
 #### Methods:
 
+* :small_blue_diamond: **`curve`**`(self)` - 
 * :small_blue_diamond: **`getBytes`**`(self)` - 
 * :small_blue_diamond: **`getPrivateKeyPEM`**`(self)` - 
 * :small_blue_diamond: **`getPublicKey`**`(self)` - 
@@ -120,6 +121,14 @@ This class implements methods for performing basic Elliptic Curve operations, su
 * :small_blue_diamond: **`fromPEM`**`(pem: str)` - 
 
   * **:arrow_forward: `pem:`** 
+* :small_blue_diamond: **`uncompress`**`(curve: cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve, data: bytes)` - load a compressed elliptic curve
+
+  * **:arrow_forward: `curve:`** 
+
+  * **:arrow_forward: `data:`** 
+
+  
+
 * :small_blue_diamond: **`unsafeTestKey`**`()` - a default key used for testing a client and server.
 
   NOT FOR PRODUCTION USE
@@ -129,7 +138,13 @@ This class implements methods for performing basic Elliptic Curve operations, su
 
 #### Methods:
 
+* :small_blue_diamond: **`compress`**`(self)` - compress elliptic curve public key as defined in ANSI X9.62 section 4.3.6
+
+  
+
+* :small_blue_diamond: **`curve`**`(self)` - 
 * :small_blue_diamond: **`getBytes`**`(self)` - 
+* :small_blue_diamond: **`getEncryptionKey`**`(self)` - 
 * :small_blue_diamond: **`getPublicKeyPEM`**`(self)` - 
 * :small_blue_diamond: **`savePEM`**`(path)` - 
 
@@ -144,3 +159,5 @@ This class implements methods for performing basic Elliptic Curve operations, su
 
   
 
+* :small_blue_diamond: **`x`**`(self)` - 
+* :small_blue_diamond: **`y`**`(self)` - 

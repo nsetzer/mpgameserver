@@ -88,7 +88,11 @@ This class exposes a method to control what the next unique id will be before a 
 
   usage:
 
-  ``` SerializableType.setRootId(__name__, 2048) ```
+  
+
+          ```
+            SerializableType.setRootId(__name__, 2048)
+        ```
 
   
 

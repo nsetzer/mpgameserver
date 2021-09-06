@@ -13,6 +13,7 @@ from threading import Thread
 from mpgameserver.connection import ServerContext, ConnectionStats
 from mpgameserver.twisted import ThreadedServer
 from mpgameserver.timer import Timer
+from mpgameserver.http_server import Router
 from mpgameserver import crypto
 
 from mpgameserver.util import is_valid_ipv6_address
@@ -276,8 +277,6 @@ class MainState(GameState):
         for wgt in self.widgets:
             wgt.update(delta_t)
 
-
-
 class GuiServer(object):
     """ A server implementation which displays run time metrics in a pygame interface
 
@@ -318,6 +317,8 @@ class GuiServer(object):
 
         self.screenshot_index = 0
 
+        g.server = ThreadedServer(self.ctxt, self.addr)
+
     def init(self):
         """ init pygame
         """
@@ -327,7 +328,19 @@ class GuiServer(object):
 
         g.screen = pygame.display.set_mode((g.screen_width, g.screen_height))
 
+
         self._init = True
+
+    def listenTCP(self, router, addr, privkey=None, cert=None):
+        """
+        Enable a TCP listener. Must be called prior to run.
+
+        :param router:  an router instance containing mapped endpoints
+        :param addr:    a 2-tuple (host: str, port: int)
+        :param privkey: the path to a ssl private key
+        :param cert:    the path to a ssl full chain certificate (pem file)
+        """
+        g.server.listenTCP(router, addr, privkey, cert)
 
     def getState(self, state):
         """ private return a state instance
@@ -381,7 +394,6 @@ class GuiServer(object):
         accumulator = 0.0
         update_step = 1 / g.FPS
 
-        g.server = ThreadedServer(self.ctxt, self.addr)
         g.server.start()
 
         while self._active:

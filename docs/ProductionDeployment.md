@@ -1,7 +1,7 @@
 [Home](../README.md)
 
 * [Echo Server Example](./example.md)
-* [PyGame Example](docs/example2.md)
+* [PyGame Example](./example2.md)
 * [Getting Started](./GettingStarted.md)
 * [Production Deployment](./ProductionDeployment.md)
 

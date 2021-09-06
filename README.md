@@ -23,6 +23,7 @@ The network protocol is based on the work of [Glenn Fiedler's Gaffer On Games](h
     * [Server](docs/server.md)
     * [Cryptography](docs/crypto.md)
     * [Serialization](docs/serializable.md)
+    * [Event Dispatch](docs/event_dispatch.md)
     * [Misc.](docs/misc.md)
     * [Experimental](docs/experimental.md)
 

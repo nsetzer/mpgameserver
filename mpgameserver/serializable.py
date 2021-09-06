@@ -500,6 +500,7 @@ class Serializable(object, metaclass=SerializableType):
     """
 
     def __init__(self, **kwargs):
+
         for attr, t in self.__annotations__.items():
             if isinstance(t, Serializable) or \
                t in (dict, list, set, tuple):
@@ -774,7 +775,6 @@ class SerializableEnum(object, metaclass=SerializableEnumType):
         elif value is None:
             self.value = value
         else:
-            self.value = value
             raise ValueError(value)
 
     def __repr__(self):

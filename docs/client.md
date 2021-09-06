@@ -74,7 +74,7 @@ The server public key is a Elliptic Curve public key that should be generated on
 
   
 
-* :small_blue_diamond: **`latency`**`(self)` - the latency is the moving average of the round trip time of every acked packet
+* :small_blue_diamond: **`latency`**`(self)` - latency is half of the moving average of round trip time, calculated when a packet is acked.
 
   * **:leftwards_arrow_with_hook: `returns:`** The connection latency
 
@@ -168,7 +168,7 @@ The attributes for packets sent/recv, bytes sent/recv and latency are sequence t
 
 **`dropped`**: the lifetime count of received packets dropped
 
-**`latency`**: a rolling list of integers. mean latency (round trip time)
+**`latency`**: a rolling list of integers. mean latency
 
 **`pkts_recv`**: a rolling list of integers. packets received.
 

@@ -1,6 +1,9 @@
 #! cd .. && python utils/genmd.py
 
+import os
 import sys
+
+sys.path.insert(0, os.getcwd())
 
 import mpgameserver
 import inspect
@@ -56,15 +59,34 @@ def parse_doc(doc, markup='param'):
 
     paragraphs = [[]]
 
-    for line in doc.splitlines():
-        line = line.strip()
+    code_block = False
+    for src_line in doc.splitlines():
+
+        if code_block:
+            # collect all lines in the code block as is
+            # until a terminator is found
+            paragraphs[-1].append(src_line)
+            if src_line.lstrip().startswith("```"):
+                code_block = False
+            continue
+
+        line = src_line.strip()
         if line:
             if line.startswith(":") and paragraphs[-1]:
+                # part of parameter or attribute documentation
                 paragraphs.append([])
+                paragraphs[-1].append(line)
             elif line.startswith("|"):
+                # part of a table
                 paragraphs.append([])
-
-            paragraphs[-1].append(line)
+                paragraphs[-1].append(line)
+            elif line.startswith("```"):
+                # beginning of a code block
+                code_block = True
+                paragraphs.append([])
+                paragraphs[-1].append(src_line)
+            else:
+                paragraphs[-1].append(line)
         else:
             if paragraphs[-1]:
                 paragraphs.append([])
@@ -77,10 +99,17 @@ def parse_doc(doc, markup='param'):
             i += 1
             continue
 
-        if paragraph[0].startswith(":%s" % markup):
+        if paragraph[0].lstrip().startswith("```"):
+            body = '\n'.join(paragraph)
+            paragraph.clear()
+            paragraph.append(body)
+            i += 1
+
+        elif paragraph[0].startswith(":%s" % markup):
             for j, line in enumerate(paragraph):
                 if line.strip().startswith("*"):
                     paragraph[j] = '\n%s%s' % (tab, tab) + line
+
             text = ' '.join(paragraph)
             text = text[len(":%s" % markup):]
             name, text = text.split(':', 1)
@@ -102,11 +131,47 @@ def parse_doc(doc, markup='param'):
 
     return summary, params, returns, paragraphs
 
+def genmd_function(stream, fn, name=None):
+    tab = "  "
+
+    if name is None:
+        name = fn.__name__
+
+    # * **`getPrivateKeyPEM()`** - return a string representation of the key
+    spec = inspect.getfullargspec(fn)
+    sig = inspect.signature(fn)
+    summary, params, returns, body = parse_doc(fn.__doc__)
+
+    if summary.startswith('private '):
+        sys.stderr.write('ignoring private function %s\n' % name)
+        return
+
+    stream.write("* :small_blue_diamond: **`%s`**`%s` - %s\n" % (name, sig, summary))
+
+    for name, param in sig.parameters.items():
+        if name == 'self':
+            continue
+
+        stream.write("\n%s* **:arrow_forward: `%s:`** %s\n" % (tab, name, params.get(name, "")))
+
+    if returns:
+        stream.write("\n%s* **:leftwards_arrow_with_hook: `%s:`** %s\n" % (tab, 'returns', returns))
+
+    if body:
+        stream.write("\n")
+        for para in body:
+            para_text = ' '.join(para)
+            if "```" in para_text:
+                stream.write(para_text)
+                stream.write("\n\n")
+            else:
+                stream.write("%s%s\n\n" % (tab, para_text))
+
 def genmd_cls_method(stream, cls, attr):
 
     tab = "  "
     # * **`getPrivateKeyPEM()`** - return a string representation of the key
-    print(cls, attr)
+    #print("%s.%s" % (cls.__name__, attr))
     method = getattr(cls, attr)
     spec = inspect.getfullargspec(method)
     sig = inspect.signature(method)
@@ -260,8 +325,7 @@ def genmd_index(wf, classes=[], enums=[]):
             name = cls.__name__
         wf.write("* [%s](#%s)\n" %(name, name.lower()))
 
-def main():
-
+def md_server():
 
     cls_vars = list(vars(mpgameserver.connection.ServerClientConnection))
     cls_vars.remove("__init__")
@@ -269,7 +333,7 @@ def main():
 
     servers = [
         (mpgameserver.handler.EventHandler, None),
-        (mpgameserver.connection.ServerClientConnection, 'EventHandler::Client', cls_vars),
+        (mpgameserver.connection.ServerClientConnection, 'EventHandler.Client', cls_vars),
         (mpgameserver.context.ServerContext, None),
         (mpgameserver.twisted.TwistedServer, None),
         (mpgameserver.guiserver.GuiServer, None),
@@ -294,6 +358,8 @@ def main():
         for cls, name in enums:
             genmd_enum(wf, cls, name)
 
+def md_client():
+
     classes = [
         (mpgameserver.client.UdpClient, None),
         (mpgameserver.connection.ConnectionStats, None),
@@ -315,6 +381,9 @@ def main():
             genmd_cls(wf, cls, name)
         for cls, name in enums:
             genmd_enum(wf, cls, name)
+
+def md_network():
+
 
     classes = [
         (mpgameserver.connection.SeqNum, None),
@@ -342,6 +411,8 @@ def main():
         for cls, name in enums:
             genmd_enum(wf, cls, name)
 
+def md_serializable():
+
     classes = [
         (mpgameserver.serializable.SerializableType, None),
         (mpgameserver.serializable.Serializable, None),
@@ -357,6 +428,9 @@ def main():
         for cls, name in classes:
             genmd_cls(wf, cls, name)
 
+def md_crypto():
+
+
     classes = [
         (mpgameserver.crypto.EllipticCurvePrivateKey, None),
         (mpgameserver.crypto.EllipticCurvePublicKey, None),
@@ -371,6 +445,8 @@ def main():
 
         for cls, name in classes:
             genmd_cls(wf, cls, name)
+
+def md_misc():
 
     doc = """
     # Utility Classes
@@ -393,6 +469,50 @@ def main():
         for cls, name in classes:
             genmd_cls(wf, cls, name)
 
+def md_event_dispatch():
+
+    doc = """
+    # Event Dispatch API
+
+    The Event Dispatch API is a collection of classes designed to work
+    with the serialization library. It allows for message dispatch
+    based on the type of the message.
+    It can be used in both the server or client.
+
+    """.replace("\n    ", " ")
+
+    cls_vars = [
+        "__init__",
+        "register",
+        "unregister",
+        "register_function",
+        "unregister_function",
+        "dispatch",
+    ]
+
+    classes = [
+        (mpgameserver.dispatch.ServerMessageDispatcher, None, cls_vars),
+        (mpgameserver.dispatch.ClientMessageDispatcher, None, cls_vars),
+    ]
+    functions = [
+        (mpgameserver.dispatch.server_event, None),
+        (mpgameserver.dispatch.client_event, None),
+    ]
+    with open("docs/event_dispatch.md", "w") as wf:
+        wf.write("[Home](../README.md)\n")
+        genmd_index(wf, classes)
+        wf.write("\n")
+        wf.write(doc)
+        wf.write("\n")
+        for cls, name, vars in classes:
+            genmd_cls(wf, cls, name, vars)
+
+        wf.write("\n## :cherry_blossom: Functions:\n\n")
+        for fn, name in functions:
+            genmd_function(wf, fn, name)
+
+def md_experimental():
+
     doc = """
     # Experimental Modules
 
@@ -400,7 +520,6 @@ def main():
 
 
     """.replace("\n    ", "")
-
 
     classes = [
         (mpgameserver.task.TaskPool, None),
@@ -415,5 +534,17 @@ def main():
         wf.write("\n")
         for cls, name in classes:
             genmd_cls(wf, cls, name)
+
+def main():
+
+    md_server()
+    md_client()
+    md_network()
+    md_serializable()
+    md_crypto()
+    md_misc()
+    md_event_dispatch()
+    md_experimental()
+
 if __name__ == '__main__':
     main()

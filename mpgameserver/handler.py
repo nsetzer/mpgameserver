@@ -1,4 +1,5 @@
 
+
 class EventHandler(object):
     """ Base class for user defined game logic.
 
@@ -73,3 +74,6 @@ class EventHandler(object):
         """
         pass
 
+from .connection import ServerClientConnection
+
+EventHandler.Client = ServerClientConnection

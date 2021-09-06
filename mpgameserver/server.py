@@ -297,18 +297,21 @@ class UdpServerThread(Thread):
             # using half the Nyquist frequency (15) should result in a
             # filter that biases towards recent samples
             #
-            #   a(Fs=60, Fc=15) := 2*pi*Fc / (Fs + 2*pi*Fc)
-            #   a(Fs=60, Fc=15) := 2*pi*(Fs/4) / (Fs + 2*pi*(Fs/4))
-            #   a(Fs=60, Fc=15) := 2*pi*(Fs/4) / ((1+ 2*pi*/4)*Fs)
-            #   a(Fs=60, Fc=15) := 0.5*pi*Fs / (1+0.5*pi)Fs
-            #   a(Fs=60, Fc=15) := 0.5*pi / (1+0.5*pi)
-            #   a(Fs=60, Fc=15) := 0.6110154703516573
+            #   a(Fs, Fc) := 2*pi*Fc / (Fs + 2*pi*Fc)
+
+            #   a(Fs=60, Fc=5)    := 0.6110154703516573
+            #   a(Fs=60, Fc=5)    := 0.3436592257647936
+            #   a(Fs=60, Fc=1)    := 0.09479305012366403
+            #   a(Fs=60, Fc=0.25) := 0.02551203525869137
+
+            #   a*Fs/(2*pi - a*2*pi) = Fc
+            #
             #
             # previously, the value was
-            #   a := 1 - exp(-1/60)
-            # this results in very slow dampening
+            #   a  := 1 - exp(-1/60) = 0.01652854617838251
+            #   Fc := 0.16048863337253744
             #
-            self.spt += (0.6110154703516573) * (p5-p1 - self.spt)
+            self.spt += (0.02551203525869137) * (p5-p1 - self.spt)
 
         self.ctxt.log.info("server main loop exited")
 
