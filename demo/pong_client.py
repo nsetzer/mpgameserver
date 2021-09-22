@@ -72,7 +72,7 @@ class ConnectingScene(Scene):
     def update(self, delta_t):
 
         if g.client.connected():
-            g.next_state = Scenes.GAME
+            g.next_state = Scenes.LOBBY
 
 class ExceptionScene(Scene):
     def __init__(self):
@@ -495,7 +495,7 @@ class LobbyScene(object):
             self.block_message_count = 0
             g.roomname = self.text_name
             # TODO: fixme enqueue
-            #g.client.enqueue(message.RoomCreateMessage(g.roomname))
+            g.client.send(common.RoomCreate(name=g.roomname).dumpb())
 
         if self.btn_logout_rect.collidepoint(pos):
             g.client.disconnect()
@@ -517,7 +517,7 @@ class LobbyScene(object):
                 self.block_message_count = 0
 
                 # TODO: fixme enqueue
-                #g.client.enqueue(message.RoomJoinMessage(uid, g.username))
+                g.client.send(common.RoomJoin(room_id=uid).dumpb())
 
         self.active_btn = -1
 
@@ -696,7 +696,6 @@ class Paddle(Entity):
                         g.score_left += 1
                         # TODO: fixme enqueue
                         #g.client.enqueue(message.UpdateScoreMessage(g.score_left, g.score_right))
-
 
 class PlayerLocal(Paddle):
     def __init__(self, px, py, ball):
@@ -921,7 +920,7 @@ class GameScene(Scene):
     def handle_message(self, msg):
 
         if msg.type_id == common.PlayerPosition.type_id:
-            self.player_remote.updateState(pkt.direction, msg.py)
+            self.player_remote.updateState(msg)
 
         #elif pkt.type == common.UpdateBallMessage.type_id:
         #    obj = None
@@ -932,7 +931,7 @@ class GameScene(Scene):
         #            obj = self.player_right
         #    self.ball.updateState(pkt.time, obj, pkt.px, pkt.py, pkt.dx, pkt.dy)
 
-        if msg.type_id == common.BallRelease.type_id:
+        elif msg.type_id == common.BallRelease.type_id:
             if self.ball.attached is not None:
                 self.ball.detach()
 
@@ -941,14 +940,14 @@ class GameScene(Scene):
             g.score_right = msg.score2
 
         elif msg.type_id == common.RoomJoinReply.type_id:
-            if msg.status == RoomJoinStatus.OK:
+            if msg.status == common.RoomJoinStatus.OK:
                 g.waiting_on_player2 = False
 
         elif msg.type_id == common.RoomDestroy.type_id:
             g.next_state = Scenes.LOBBY
 
         else:
-            print(pkt)
+            print(msg)
 
     def handle_event(self, evt):
 

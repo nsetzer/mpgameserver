@@ -34,7 +34,6 @@ class GameService(object):
         self.player_room = {}  # addr to Room
 
         self.next_id = 1
-        self.rooms[0] = Room(0, "abc")
 
     def connect(self, client):
         self.players[client.addr] = client
@@ -61,6 +60,23 @@ class GameService(object):
 
         return room
 
+    def joinRoom(self, client, room_id):
+
+        if room_id not in self.rooms:
+            return None, common.RoomJoinStatus.ERROR_DNE
+
+        room = self.rooms[room_id]
+
+        if room.player1:
+            return None, common.RoomJoinStatus.ERROR_FULL
+
+        room.player1 = client
+
+        self.player_room[client.addr] = room
+
+        return room, common.RoomJoinStatus.OK
+
+
 class LobbyResource(object):
     def __init__(self, service):
         super(LobbyResource, self).__init__()
@@ -69,8 +85,6 @@ class LobbyResource(object):
 
     def connect(self, client):
         self.service.connect(client)
-
-
 
     def disconnect(self, client):
         self.service.disconnect(client)
@@ -83,13 +97,41 @@ class LobbyResource(object):
     @server_event
     def onRoomCreate(self, client, seqnum, msg: common.RoomCreate):
 
-        room = self.service.createRoom(msg.name)
-        msg = RoomCreateReply(room_id=room.room_id)
+        room = self.service.createRoom(client, msg.name)
+        msg = common.RoomCreateReply(room_id=room.room_id)
         client.send(msg.dumpb())
 
     @server_event
     def onRoomJoin(self, client, seqnum, msg: common.RoomJoin):
-        pass
+
+        room, status = self.service.joinRoom(client, msg.room_id)
+        if room:
+
+            msg = common.RoomJoinReply(
+                room_id=room.room_id,
+                status=status,
+                opponent_name="alice",
+                side=common.PlayerSide.LEFT
+                )
+            room.player0.send(msg.dumpb())
+
+            msg = common.RoomJoinReply(
+                room_id=room.room_id,
+                status=status,
+                opponent_name="bob",
+                side=common.PlayerSide.RIGHT
+                )
+            room.player1.send(msg.dumpb())
+
+        else:
+
+            msg = common.RoomJoinReply(
+                room_id=0,
+                status=status,
+                opponent_name="",
+                side=common.PlayerSide.UNKNOWN
+                )
+            client.send(msg.dumpb())
 
 class GameResource(object):
     def __init__(self, service):
@@ -114,7 +156,15 @@ class GameResource(object):
 
     @server_event
     def onPlayerPosition(self, client, seqnum, msg: common.PlayerPosition):
-        pass
+
+        # just send player position updates to the other player in the room
+        room = self.service.player_room[client.addr]
+
+        if room.player0 is client and room.player1:
+            room.player1.send(msg.dumpb())
+
+        if room.player1 is client and room.player0:
+            room.player0.send(msg.dumpb())
 
 class PongHandler(EventHandler):
     def __init__(self):

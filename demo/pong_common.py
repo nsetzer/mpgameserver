@@ -1,3 +1,4 @@
+#! cd .. && python -m demo.pong_server
 
 import pygame
 import math
