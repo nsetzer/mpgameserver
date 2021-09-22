@@ -77,6 +77,13 @@ MAX_BYTES_LENGTH = 2**20
 
 MAX_ARRAY_LENGTH = 2**14
 
+def _default():
+    class Default(object):
+        def __repr__(self):
+            return "serializable.Default"
+    return Default()
+Default = _default()
+
 class SerializableBaseTypes(object):
 
     bool_t    = 1
@@ -329,8 +336,8 @@ deserialize_types = {
 def deserialize_value(stream, **kwargs):
 
     """
-    todo: allow passing a custom registry in as a kwarg
-          for non-builtin types use the registry when decoding
+    kwargs can contain a 'registry', a mapping of type_id to Serializable
+    class names.
 
     when serializing to persistent storage, store the registry
     as a sequence of typeid: string-name (using basic types)
@@ -342,11 +349,7 @@ def deserialize_value(stream, **kwargs):
         raise SerializableHeaderError("unexpected end of stream")
     type_id, = struct.unpack(">H", buf)
 
-    if 'registry' in kwargs:
-        registry = kwargs['registry']
-    else:
-        registry = SerializableType.registry
-
+    registry = kwargs.get('registry', SerializableType.registry)
 
     if type_id in deserialize_types:
         typ_ = deserialize_types[type_id]
@@ -507,6 +510,9 @@ class Serializable(object, metaclass=SerializableType):
                 setattr(self, attr, t())
             elif get_origin(t) in (dict, list, set, tuple):
                 setattr(self, attr, get_origin(t)())
+            else:
+                if getattr(self, attr) is Default:
+                    setattr(self, attr, t())
 
         for k,v in kwargs.items():
             if k in self._fields:
@@ -550,6 +556,16 @@ class Serializable(object, metaclass=SerializableType):
             setattr(self, field, deserialize_value(stream))
         return self
 
+    def store_persistant(self, stream):
+        """ private write to long term storage
+
+        write a registry from the stream, which includes the mapping
+        of type_id to message types. then serialize the message to the stream
+        """
+
+        serialize_registry(stream)
+        serialize_value(stream, self)
+
     def dumpb(self, **kwargs):
         """ return a byte array representation of this class
 
@@ -558,7 +574,8 @@ class Serializable(object, metaclass=SerializableType):
 
         """
         stream = BytesIO()
-        stream.write(struct.pack(">H", self.type_id))
+        #stream.write(struct.pack(">H", self.type_id))
+        self.serialize_header(stream)
         self.serialize(stream, **kwargs)
         return stream.getvalue()
 
@@ -593,6 +610,19 @@ class Serializable(object, metaclass=SerializableType):
     @classmethod
     def loads(cls, string, **kwargs):
         return cls.fromJson(json.loads(string, **kwargs))
+
+    @staticmethod
+    def load_persistant(stream, **kwargs):
+        """ private load from long term storage
+
+        read a registry from the stream, which includes the mapping
+        of type_id to message types. use the registry to deserialize
+        the rest of the stream
+        """
+        if isinstance(stream, bytes):
+            stream = BytesIO(stream)
+        registry = deserialize_registry(stream)
+        return deserialize_value(stream, registry=registry)
 
     @classmethod
     def fromJson(cls, record):
@@ -848,8 +878,46 @@ class SerializableEnum(object, metaclass=SerializableEnumType):
     def __bool__(self):
         return bool(self.value)
 
+
 def main():  #pragma: no cover
-    pass
+
+
+    class Color(SerializableEnum):
+        RED=1
+        BLUE=2
+        GREEN=3
+
+    class Shape(SerializableEnum):
+        SQUARE=1
+        RECTANGLE=2
+        CIRCLE=3
+
+    class Block(Serializable):
+        color: Color = Color.RED
+        shape: Shape = Shape.SQUARE
+
+    class Block2(Serializable):
+        block: Block = Default
+
+    block2 = Block2()
+    print(block2)
+
+    block = Block()
+    print(Block._fields)
+    print(block)
+    print(block.toJson())
+
+    stream = BytesIO()
+    block.store_persistant(stream)
+    print(stream.getvalue())
+
+    stream.seek(0)
+    block2 = Serializable.load_persistant(stream)
+    print(block2)
+
+
+
+
 
 if __name__ == '__main__':  #pragma: no cover
     main()
