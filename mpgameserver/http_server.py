@@ -5,6 +5,7 @@ import time
 import gzip
 import io
 import logging
+import threading
 
 from collections import defaultdict
 
@@ -114,6 +115,54 @@ def delete(path):
     return decorator
 
 class Resource(object):
+    """ A Resource is a collection of related endpoints that can be
+    registered with a Router.
+
+    Subclass this class and define methods with the annotations: get, put, post, delete
+    to automatically register endpoints. Each method takes a single argument, the request.
+    Then register the resource with a Router. When the server receives an HTTP
+    request the url path will be matched with an endpoint and the corresponding function
+    will be called.
+
+
+    When using HTTP verb annotations, the path may include named wildcards using
+    a colon prefix. The special characters ?, +, * allow for changing how the
+    wildcard matching is performed.
+
+    ```
+    /abc        - match exactly. e.g. '/abc'
+    /:abc       - match a path compenent exactly once. e.g. '/one' or '/two'
+    /:abc?      - match a path component 0 or 1 times. e.g. '/' or '/one'
+    /:abc+      - match a path component 1 or more times. e.g. '/one' or '/one/two'
+    /:abc*      - match a path component 0 or more times. e.g. '/' or '/one' or '/one/two'
+    ```
+
+    When the router is attempting to match a path to a registerd endpoint,
+    the first successful match is used.
+
+    Example:
+
+    ```
+    class MyResource(Resource):
+
+        @get("/user/:username")
+        def get_user(self, request):
+            pass
+
+        @post("/user/:username"):
+        def create_user(self, request):
+            pass
+
+        @delete("/user/:username"):
+        def delete_user(self, request):
+            pass
+
+
+    ```
+
+
+
+    """
     def __init__(self):
         super(Resource, self).__init__()
 
@@ -130,9 +179,17 @@ class Resource(object):
                 self._endpoints.append((methods[0], path, attr))
 
     def endpoints(self):
+        """
+
+        :returns: a list-of-3-tuples: [(http_method, url_pattern, callback)]
+        """
         return self._endpoints
 
 class Router(object):
+    """
+
+
+    """
     def __init__(self):
         super(Router, self).__init__()
         self.route_table = {
@@ -144,12 +201,26 @@ class Router(object):
         self.endpoints = []
 
     def registerEndpoints(self, endpoints):
+        """ register endpoints with the router
+
+
+        :param endpoints: either a Resource instance,
+            or a list-of-3-tuples: [(http_method, url_pattern, callback)]
+        """
+
+        if isinstance(endpoints, Resource):
+            endpoints = endpoints.endpoints()
+
         for method, pattern, callback in endpoints:
             regex, tokens = self.patternToRegex(pattern)
             self.route_table[method].append((regex, tokens, callback))
             self.endpoints.append((method, pattern))
 
     def getRoute(self, method, path):
+        """ private method
+
+        Get the route for a given method and path
+        """
         if method not in self.route_table:
             logging.error("unsupported method: %s", method)
             return None
@@ -161,18 +232,19 @@ class Router(object):
         return None
 
     def patternToRegex(self, pattern):
-        # convert a url pattern into a regular expression
-        #
-        #   /abc        - match exactly
-        #   /:abc       - match a path compenent exactly once
-        #   /:abc?      - match a path component 0 or 1 times
-        #   /:abc+      - match a path component 1 or more times
-        #   /:abc*      - match a path component 0 or more times
-        #
-        # /:abc will match '/foo' with
-        #  {'abc': foo}
-        # /:bucket/:key* will match '/mybucket/dir1/dir2/fname' with
-        #  {'bucket': 'mybucket', key: 'dir1/dir2/fname'}
+        """ private method
+        convert a url pattern into a regular expression
+
+
+        ```
+        /abc        - match exactly. e.g. '/abc'
+        /:abc       - match a path compenent exactly once. e.g. '/one' or '/two'
+        /:abc?      - match a path component 0 or 1 times. e.g. '/' or '/one'
+        /:abc+      - match a path component 1 or more times. e.g. '/one' or '/one/two'
+        /:abc*      - match a path component 0 or more times. e.g. '/' or '/one' or '/one/two'
+        ```
+
+        """
 
         parts = [part for part in pattern.split("/") if part]
         tokens = []
@@ -204,39 +276,83 @@ class Router(object):
         re_str += '$'
         return (re.compile(re_str), tokens)
 
+class Request(object):
+    """ A Request contains information received from a client
+
+
+    :attr headers: a dictionary of HTTP headers
+    :attr location: the path component of the uri
+    :attr matches: dictionary of matched path components. See the Resource documentation for mor information
+    :attr method: a bytes string containing the HTTP method
+    :attr query: dictionary of decoded query parameters
+    :attr stream: a File-like object containig the request content
+    :attr uri: the raw request uri
+    """
+
+    def __init__(self, method, uri, stream, headers):
+        super(Request, self).__init__()
+
+        parsed = urlparse(unquote(uri))
+
+        self.method = method
+        self.url = uri
+        self.location = parsed.path
+        self.stream = stream
+        self.headers = headers
+        self.matches = {}
+
+        self.query = defaultdict(list)
+        parts = parsed.query.split("&")
+        for part in parts:
+            if '=' in part:
+                key, value = part.split("=", 1)
+                self.query[key].append(value)
+            else:
+                self.query[part].append(None)
+
+    def json(self):
+        """ deserialize the request content as a JSON
+        """
+        # self.requestHeaders['Content-Type']
+        return json.loads(self.stream.read().decode("utf-8"))
+
+    def message(self):
+        """ deserialize the request content as a Serializable instance
+        """
+        return Serializable.loadb(self.stream.read())
+
 class RequestFactory(http.Request):
-    """
-
-    member variables:
-
-    location: the decoded path component of the url
-    query: dictionary of decoded query parameters
-    """
 
     def process(self):
+        """ private method
+
+        decode the request, call the user callback, encode the response
+        """
+        t0 = time.perf_counter()
         router = self.channel.requestRouter
-        url = urlparse(unquote(self.uri.decode()))
-        result = router.getRoute(self.method.decode(), url.path)
+
+        req = Request(
+            self.method.decode("utf-8"),
+            self.uri.decode("utf-8"),
+            self.content,
+            self.requestHeaders)
+
+        result = router.getRoute(req.method, req.location)
 
         if result:
             callback, matches = result
 
-            self.query = defaultdict(list)
-            parts = url.query.split("&")
-            for part in parts:
-                if '=' in part:
-                    key, value = part.split("=", 1)
-                    self.query[key].append(value)
-                else:
-                    self.query[part].append(None)
-
-            self.location = url.path
-            self.matches = matches
+            req.matches = matches
 
             # TODO: self.content is a file like object
             #       for json: replace with json?
             #       for serializeable replace?
-            response = callback(self)
+
+            try:
+                response = callback(req)
+            except Exception as e:
+                logging.exception("user callback failed")
+                response = None
 
             if response is None:
                 response = JsonResponse({'error':
@@ -248,17 +364,17 @@ class RequestFactory(http.Request):
             response = JsonResponse({'error': 'path not found'}, 404)
 
         # this may mutate the headers
-        print(response)
-        payload = response._get_payload(self)
+        payload = response._get_payload(req)
+
+        content_length = None
 
         try:
 
             self.setResponseCode(response.status_code)
 
-            content_length_set = False
             for k, v in response.headers.items():
                 if k.lower() == "content-length":
-                    content_length_set = True
+                    content_length = v
                 if not isinstance(v, str):
                     logging.warning("header value is not a string. %s=%s", k, v)
                     v = str(v)
@@ -270,8 +386,9 @@ class RequestFactory(http.Request):
                     self.write(buf)
                     buf = payload.read(RequestHandler.BUFFER_TX_SIZE)
             else:
-                if not content_length_set:
-                    self.setHeader("Content-Length", str(len(payload)))
+                if content_length is None:
+                    content_length = str(len(payload))
+                    self.setHeader("Content-Length", content_length)
                 self.write(payload)
 
         except ConnectionAbortedError as e:
@@ -281,6 +398,19 @@ class RequestFactory(http.Request):
         finally:
             if hasattr(payload, "close"):
                 payload.close()
+
+            elapsed = int((time.perf_counter() - t0) * 1000)
+            logging.info("%016X %s:%s %s %3s t=%6d %-8s %s [%s] %s" % (
+                threading.get_ident(),
+                self.getClientAddress().host,
+                self.getClientAddress().port,
+                self.clientproto.decode(),
+                response.status_code,
+                elapsed,
+                req.method,
+                req.location,
+                content_length,
+                "z" if response.compress else ""))
 
             self.finish()
 

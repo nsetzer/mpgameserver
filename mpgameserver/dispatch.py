@@ -2,6 +2,10 @@
 import inspect
 from mpgameserver import Serializable, SeqNum
 
+
+class DispatchError(Exception):
+    pass
+
 def server_event(method):
     """
     method decorator for server events
@@ -173,7 +177,10 @@ class ServerMessageDispatcher(MessageDispatcher):
 
         """
 
-        self.registered_events[type(msg)](client, seqnum, msg)
+        T = type(msg)
+        if T not in self.registered_events:
+            raise DispatchError(T.__name__)
+        self.registered_events[T](client, seqnum, msg)
 
 class ClientMessageDispatcher(MessageDispatcher):
     """ An Event Dispatcher for server events
@@ -195,6 +202,8 @@ class ClientMessageDispatcher(MessageDispatcher):
         :param seqnum: the seqnum for the received message
         :param msg: the message received from the server
         """
-
-        self.registered_events[type(msg)](seqnum, msg)
+        T = type(msg)
+        if T not in self.registered_events:
+            raise DispatchError(T.__name__)
+        self.registered_events[T](seqnum, msg)
 

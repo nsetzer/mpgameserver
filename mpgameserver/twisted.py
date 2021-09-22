@@ -99,9 +99,14 @@ class TwistedServer(DatagramProtocol):
         reactor.listenUDP(self.addr[1], self, interface=self.addr[0], maxPacketSize=2048)
 
         cert = None
-        if self._tcp_pem_path is not None:
-            with open(self._tcp_pem_path) as keyAndCert:
-                cert = ssl.PrivateCertificate.loadPEM(keyAndCert.read())
+        if self._tcp_privkey_path is not None:
+            keyAndCert = ""
+            with open(self._tcp_privkey_path) as key:
+                keyAndCert += key.read()
+            with open(self._tcp_cert_path) as cert:
+                keyAndCert += cert.read()
+
+            cert = ssl.PrivateCertificate.loadPEM(keyAndCert)
 
         if self._tcp_addr:
             self.ctxt.log.info("tcp server listening on %s:%d" % (self._tcp_addr))

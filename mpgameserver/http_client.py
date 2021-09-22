@@ -16,7 +16,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 import logging
 
-
 def asyncio_thread(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
@@ -91,7 +90,7 @@ def make_request(method, url, payload, query, headers):
 def execute_async_function(handle, fn, args, kwargs):
 
     try:
-        handle.result = fn(*args, **kwargs)
+        handle.response = fn(*args, **kwargs)
     finally:
         handle.ready = True
 
@@ -105,7 +104,7 @@ class RequestHandle(object):
         self.hid = handle_id
         handle_id += 1
         self.async_handle = None
-        self.result = None
+        self.response = None
         self.ready = False
 
     def cancel(self):
@@ -125,10 +124,11 @@ class AsyncHTTPClientImpl(object):
             self.executor = ThreadPoolExecutor(max_workers = 1)
             self.loop.set_default_executor(self.executor)
 
+        self.handles = []
+
+    def start(self):
         self.thread = threading.Thread(target=asyncio_thread, args=(self.loop,))
         self.thread.start()
-
-        self.handles = []
 
     def stop(self):
 
@@ -173,7 +173,10 @@ class AsyncHTTPClientImpl(object):
         self.handles.append(handle)
         return handle
 
-    def getResults(self):
+    def pending(self):
+        return len(self.handles)
+
+    def getResponses(self):
         i = 0
         while i < len(self.handles):
             handle = self.handles[i]
@@ -212,8 +215,23 @@ class HTTPClient(object):
         url = "%s://%s:%d%s" % (self.protocol, *self.addr, path)
         return self.client.delete(url, payload, query, headers)
 
-    def getResults(self):
-        return self.client.getResults()
+    def pending(self):
+        """ get the number of pending requests
+
+        :returns: the count of pending requests
+        """
+        return self.client.pending()
+
+    def getResponses(self):
+        """ yield from the pending set of requests.
+        return a handle containing information for each completed request.
+
+        :returns: a generator of completed RequestHandle instances
+        """
+        return self.client.getResponses()
+
+    def start(self):
+        self.client.start()
 
     def stop(self):
         self.client.stop()

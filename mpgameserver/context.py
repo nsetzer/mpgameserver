@@ -19,7 +19,7 @@ class ServerContext(object):
 
         :param handler: an instance of an EventHandler
         :param root_key: an EllipticCurvePrivateKey used for signing messages.
-            The client will use the public to to verify the signature.
+            The client will use the public key to to verify the signature.
             If not given a debug key is used.
         """
 
@@ -53,6 +53,7 @@ class ServerContext(object):
 
     def get_token(self):
         """ private generate a unique token """
+        # TODO: should the token be increased to 16 or 32 bytes?
         token, = struct.unpack(">L", os.urandom(4))
         while token == 0 or token in self.connections or token in self.temp_connections:
             token, = struct.unpack(">L", os.urandom(4))
@@ -118,14 +119,14 @@ class ServerContext(object):
             self.access_log = setupLogger('mpgameserver.AccessLog', path)
 
     def _validateChallengeResponse(self, client, token):
-        """ validate the challenge resposne"""
+        """ validate the challenge response"""
         other = self.temp_connections.get(client.addr, None)
         if other and other.token == token:
             return True
         return False
 
     def _onConnect(self, client):
-        """ called when the challenge resposne is validated """
+        """ called when the challenge response is validated """
 
         if client.addr in self.temp_connections:
             del self.temp_connections[client.addr]
