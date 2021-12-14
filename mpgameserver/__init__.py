@@ -8,7 +8,7 @@ from mpgameserver.context import ServerContext
 from mpgameserver.crypto import EllipticCurvePrivateKey, EllipticCurvePublicKey
 from mpgameserver.handler import EventHandler
 from mpgameserver.logger import setupLogger
-from mpgameserver.serializable import SerializableType, Serializable, SerializableEnum
+from mpgameserver.serializable import SerializableType, Serializable, SerializableEnum, Default
 from mpgameserver.task import TaskPool
 from mpgameserver.timer import Timer
 from mpgameserver.twisted import TwistedServer, ThreadedServer

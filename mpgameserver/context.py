@@ -143,7 +143,7 @@ class ServerContext(object):
         try:
             self.handler.connect(client)
         except Exception as e:
-            client.exception("unhandled error during connect")
+            client.log.exception("unhandled error during connect")
 
 
     def onDisconnect(self, client):
@@ -152,7 +152,7 @@ class ServerContext(object):
         try:
             self.handler.disconnect(client)
         except Exception as e:
-            client.exception("unhandled error during disconnect")
+            client.log.exception("unhandled error during disconnect")
 
     def shutdown(self):
         """ stop the server if it is running

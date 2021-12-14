@@ -161,6 +161,7 @@ class UdpServerThread(Thread):
                     # message is from a new client
                     else:
                         if hdr.pkt_type != PacketType.CLIENT_HELLO:
+                            logging.warning("unexpected packet: %s %s", addr, hdr)
                             continue
 
                         self.ctxt.log.info("%s:%d received new client", *addr)

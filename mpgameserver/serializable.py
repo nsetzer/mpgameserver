@@ -236,7 +236,7 @@ serialize_types = {
     type(None): serialize_null,
 }
 
-def serialize_value(stream, value, **kwargs):
+def serialize_value(stream, value, _field=None, **kwargs):
 
     t = type(value)
 
@@ -258,7 +258,7 @@ def serialize_value(stream, value, **kwargs):
         value.serialize_header(stream)
         value.serialize(stream, **kwargs)
     else:
-        raise TypeError("%s" % type(value))
+        raise TypeError("%s: %s" % (_field, type(value)))
 
 def serialize_map(stream, value):
     if len(value) > MAX_ARRAY_LENGTH:
@@ -305,18 +305,18 @@ class SerializableError(Exception):
 class SerializableHeaderError(SerializableError):
     pass
 
-deserialize_bool_t    = lambda stream: struct.unpack(">?", stream.read(1))[0]
-deserialize_int8_t    = lambda stream: struct.unpack(">b", stream.read(1))[0]
-deserialize_int16_t   = lambda stream: struct.unpack(">h", stream.read(2))[0]
-deserialize_int32_t   = lambda stream: struct.unpack(">l", stream.read(4))[0]
-deserialize_int64_t   = lambda stream: struct.unpack(">q", stream.read(8))[0]
-deserialize_uint8_t   = lambda stream: struct.unpack(">B", stream.read(1))[0]
-deserialize_uint16_t  = lambda stream: struct.unpack(">H", stream.read(2))[0]
-deserialize_uint32_t  = lambda stream: struct.unpack(">L", stream.read(4))[0]
-deserialize_uint64_t  = lambda stream: struct.unpack(">Q", stream.read(8))[0]
-deserialize_float32_t = lambda stream: struct.unpack(">f", stream.read(4))[0]
-deserialize_float64_t = lambda stream: struct.unpack(">d", stream.read(8))[0]
-deserialize_null_t    = lambda stream: None
+deserialize_bool_t    = lambda stream, **kwargs: struct.unpack(">?", stream.read(1))[0]
+deserialize_int8_t    = lambda stream, **kwargs: struct.unpack(">b", stream.read(1))[0]
+deserialize_int16_t   = lambda stream, **kwargs: struct.unpack(">h", stream.read(2))[0]
+deserialize_int32_t   = lambda stream, **kwargs: struct.unpack(">l", stream.read(4))[0]
+deserialize_int64_t   = lambda stream, **kwargs: struct.unpack(">q", stream.read(8))[0]
+deserialize_uint8_t   = lambda stream, **kwargs: struct.unpack(">B", stream.read(1))[0]
+deserialize_uint16_t  = lambda stream, **kwargs: struct.unpack(">H", stream.read(2))[0]
+deserialize_uint32_t  = lambda stream, **kwargs: struct.unpack(">L", stream.read(4))[0]
+deserialize_uint64_t  = lambda stream, **kwargs: struct.unpack(">Q", stream.read(8))[0]
+deserialize_float32_t = lambda stream, **kwargs: struct.unpack(">f", stream.read(4))[0]
+deserialize_float64_t = lambda stream, **kwargs: struct.unpack(">d", stream.read(8))[0]
+deserialize_null_t    = lambda stream, **kwargs: None
 
 deserialize_types = {
     SerializableBaseTypes.bool_t:      deserialize_bool_t,
@@ -360,7 +360,7 @@ def deserialize_value(stream, **kwargs):
 
     try:
         if type_id in deserialize_types:
-            return deserialize_types[type_id](stream)
+            return deserialize_types[type_id](stream, **kwargs)
         elif type_id in registry:
             obj = registry[type_id]()
             obj.deserialize(stream, **kwargs)
@@ -372,9 +372,9 @@ def deserialize_value(stream, **kwargs):
         # raise a new error with the last type that successfully decoded
         raise SerializableError("unable to deserialize type %s" % typ_)
 
-def deserialize_string(stream):
+def deserialize_string(stream, **kwargs):
 
-    length = deserialize_value(stream)
+    length = deserialize_value(stream, **kwargs)
     if not isinstance(length, int):
         raise TypeError("expected integer length, found %s" % type(length))
 
@@ -383,9 +383,9 @@ def deserialize_string(stream):
 
     return stream.read(length).decode("utf-8")
 
-def deserialize_bytes(stream):
+def deserialize_bytes(stream, **kwargs):
 
-    length = deserialize_value(stream)
+    length = deserialize_value(stream, **kwargs)
 
     if not isinstance(length, int):
         raise TypeError("expected integer length, found %s" % type(length))
@@ -395,8 +395,8 @@ def deserialize_bytes(stream):
 
     return stream.read(length)
 
-def deserialize_map(stream):
-    length = deserialize_value(stream)
+def deserialize_map(stream, **kwargs):
+    length = deserialize_value(stream, **kwargs)
 
     if not isinstance(length, int):
         raise TypeError("expected integer length, found %s" % type(length))
@@ -406,14 +406,14 @@ def deserialize_map(stream):
 
     obj = {}
     for i in range(length):
-        k = deserialize_value(stream)
-        v = deserialize_value(stream)
+        k = deserialize_value(stream, **kwargs)
+        v = deserialize_value(stream, **kwargs)
         obj[k] = v
 
     return obj
 
-def deserialize_seq(stream):
-    length = deserialize_value(stream)
+def deserialize_seq(stream, **kwargs):
+    length = deserialize_value(stream, **kwargs)
 
     if not isinstance(length, int):
         raise TypeError("expected integer length, found %s" % type(length))
@@ -425,15 +425,15 @@ def deserialize_seq(stream):
     for i in range(length):
 
         try:
-            o = deserialize_value(stream)
+            o = deserialize_value(stream, **kwargs)
             obj.append(o)
         except Exception as e:
             raise e
 
     return obj
 
-def deserialize_set(stream):
-    length = deserialize_value(stream)
+def deserialize_set(stream, **kwargs):
+    length = deserialize_value(stream, **kwargs)
 
     if not isinstance(length, int):
         raise TypeError("expected integer length, found %s" % type(length))
@@ -441,7 +441,7 @@ def deserialize_set(stream):
     if length > MAX_ARRAY_LENGTH:
         raise ValueError("set length too large: %d" % length)
 
-    obj = set([deserialize_value(stream) for i in range(length)])
+    obj = set([deserialize_value(stream, **kwargs) for i in range(length)])
 
     return obj
 
@@ -460,7 +460,8 @@ def deserialize_registry(stream, **kwargs):
         type_id = deserialize_value(stream, **kwargs)
         cls_name = deserialize_value(stream, **kwargs)
 
-        obj[type_id] = SerializableType.names[cls_name]
+        if cls_name in SerializableType.names:
+            obj[type_id] = SerializableType.names[cls_name]
     return obj
 
 def _fromJsonBasic(type, field, value):
@@ -542,7 +543,7 @@ class Serializable(object, metaclass=SerializableType):
         """
         #stream.write(struct.pack(">H", self.type_id))
         for field in self._fields:
-            serialize_value(stream, getattr(self, field))
+            serialize_value(stream, getattr(self, field), field)
 
     def deserialize(self, stream, **kwargs):
         """populate member attributes by reading fields from a stream.
@@ -551,9 +552,16 @@ class Serializable(object, metaclass=SerializableType):
         :param kwargs: extra arguments that are passed to deserialize, a specialization of deserialize
         can use kwargs to control how the class is deserialized
 
+        :returns: self
+
+        Note: the return value can be any serializable type
+        to implement versioning, old versions can be deserialized and then
+        convert to the new version and return that instead by
+        reimplementing this function for that type.
+
         """
         for field in self._fields:
-            setattr(self, field, deserialize_value(stream))
+            setattr(self, field, deserialize_value(stream, **kwargs))
         return self
 
     def store_persistant(self, stream):
@@ -704,7 +712,6 @@ class Serializable(object, metaclass=SerializableType):
         In addition, no conversion is done for float types. This means that invalid
         JSON float values are not modified.
         """
-
         obj = {}
         for field in self._fields:
 
@@ -847,7 +854,7 @@ class SerializableEnum(object, metaclass=SerializableEnumType):
 
     @classmethod
     def fromJson(cls, value):
-        return cls._name2value[value]
+        return cls._name2value[value.upper()]
 
     def toJson(self):
         """ return a dictionary suitable for passing to json.dumps
@@ -899,10 +906,14 @@ def main():  #pragma: no cover
     class Block2(Serializable):
         block: Block = Default
 
+    block = Block()
+    print(block.toJson())
+    print(Block.fromJson({"color": "BLUE"}))
+
+
     block2 = Block2()
     print(block2)
 
-    block = Block()
     print(Block._fields)
     print(block)
     print(block.toJson())

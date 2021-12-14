@@ -327,13 +327,13 @@ class EllipticCurvePublicKey(object):
     def curve(self):
         return self.key.curve
 
-    def x(self):
+    def x(self) -> bytes:
         return self.key.public_numbers().x.to_bytes(32, 'little')
 
-    def y(self):
+    def y(self) -> bytes:
         return self.key.public_numbers().y.to_bytes(32, 'little')
 
-    def compress(self):
+    def compress(self) -> bytes:
         """
         compress elliptic curve public key as defined in ANSI X9.62 section 4.3.6
         """
@@ -501,7 +501,12 @@ def ecc_asym_decrypt_key(privateKey: EllipticCurvePrivateKey, peerCompressedPubl
 def main():
 
     key = EllipticCurvePrivateKey.new()
-    shared_key1, peer_pubkey = ecc_asym_encrypt_key(key.getPublicKey())
+    pub = key.getPublicKey()
+
+    print(pub.curve())
+    print(pub.getEncryptionKey())
+    print("-----------")
+    shared_key1, peer_pubkey = ecc_asym_encrypt_key(pub)
     shared_key2 = ecc_asym_decrypt_key(key, peer_pubkey)
     print(binascii.hexlify(shared_key1))
     print(binascii.hexlify(shared_key2))

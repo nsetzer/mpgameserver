@@ -166,6 +166,14 @@ class UdpClient(object):
             self.sock.close()
             self.sock = None
 
+    def forceDisconnect(self):
+
+
+        self.conn = None
+        if self.sock:
+            self.sock.close()
+            self.sock = None
+
     def update(self):
         """ send and receive messages
 
@@ -184,22 +192,27 @@ class UdpClient(object):
             try:
                 self.conn.update()
 
-                r, w,_ = select.select([self.sock], [self.sock], [], 0)
+                if self.conn.status == ConnectionStatus.DROPPED:
 
-                if r:
-                    datagram, addr = self.sock.recvfrom(Packet.RECV_SIZE)
-                    hdr = PacketHeader.from_bytes(False, datagram)
-                    self.conn._recv_datagram(hdr, datagram)
+                    pass
+                else:
 
-                t0 = self.conn.clock()
-                if t0 - self.conn.last_send_time > self.conn.send_interval:
-                    pkt = self.conn._build_packet()
+                    r, w,_ = select.select([self.sock], [self.sock], [], 0)
 
-                    if pkt is not None:
-                        datagram = self.conn._encode_packet(pkt)
-                        self.sock.sendto(datagram, self.addr)
+                    if r:
+                        datagram, addr = self.sock.recvfrom(Packet.RECV_SIZE)
+                        hdr = PacketHeader.from_bytes(False, datagram)
+                        self.conn._recv_datagram(hdr, datagram)
 
-                    self.conn._check_timeout(t0)
+                    t0 = self.conn.clock()
+                    if t0 - self.conn.last_send_time > self.conn.send_interval:
+                        pkt = self.conn._build_packet()
+
+                        if pkt is not None:
+                            datagram = self.conn._encode_packet(pkt)
+                            self.sock.sendto(datagram, self.addr)
+
+                        self.conn._check_timeout(t0)
 
             except ConnectionResetError as e:
                 self.conn = None
@@ -223,7 +236,10 @@ class UdpClient(object):
             If retry is negative then the callback will be called when the message
             is finally acked.
         """
-        self.conn.send(msg, retry=retry, callback=callback)
+        if self.conn:
+            self.conn.send(msg, retry=retry, callback=callback)
+        else:
+            logging.error("client.send error: client not connected")
 
     def send_guaranteed(self, payload: bytes, callback:SendCallback=None):
         """ send the message and guarantee delivery by using RetryMode.RETRY_ON_TIMEOUT

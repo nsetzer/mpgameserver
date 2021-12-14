@@ -57,6 +57,7 @@ def setupLogger(logger_name, log_file):
         os.makedirs(parent)
 
     l = logging.getLogger(logger_name)
+    l.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)-15s %(levelname)s %(pathname)s:%(funcName)s:%(lineno)d: %(message)s')
 
     size = 1024 * 1024

@@ -10,6 +10,9 @@ class Timer(object):
         self.expires_t2 = duration - Timer.INTERVAL/2
         self.callback = callback
 
+    def reset(self):
+        self.elapsed_t = 0
+
     def update(self, delta_t):
         self.elapsed_t += delta_t
         if self.elapsed_t >= self.expires_t2:

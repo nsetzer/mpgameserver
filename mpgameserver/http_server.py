@@ -35,6 +35,8 @@ class Response(object):
             self.payload = self.payload.encode("utf-8")
 
     def _get_payload(self, request):
+        """ return the payload in a form suitable for sending to the client
+        """
 
         if self.compress:
             # TODO: check if request headers suport compression
@@ -58,11 +60,26 @@ class Response(object):
     def __str__(self):
         return "<%s(%d)>" % (self.__class__.__name__, self.status_code)
 
+class ErrorResponse(Response):
+    """ Represents an http error response returned from the server
+
+    Clients will use this class to hold the original exception raised
+    by urllib.
+
+    """
+
+    def __init__(self, obj, status_code=400, headers=None):
+        super(ErrorResponse, self).__init__(obj, status_code, headers)
+
 class JsonResponse(Response):
     def __init__(self, obj, status_code=200, headers=None):
         super(JsonResponse, self).__init__(obj, status_code, headers)
 
     def _get_payload(self, request):
+        """ return the payload in a form suitable for sending to the client
+        """
+
+        # TODO: support compression (copy from above)
 
         payload = super()._get_payload(request)
         encoded = json.dumps(payload).encode('utf-8') + b"\n"
@@ -75,6 +92,8 @@ class SerializableResponse(Response):
         super(SerializableResponse, self).__init__(obj, status_code, headers)
 
     def _get_payload(self, request):
+        """ return the payload in a form suitable for sending to the client
+        """
 
         payload = super()._get_payload(request)
         encoded = payload.dumpb()
@@ -280,6 +299,7 @@ class Request(object):
     """ A Request contains information received from a client
 
 
+    :attr client_address: the clients IP and port
     :attr headers: a dictionary of HTTP headers
     :attr location: the path component of the uri
     :attr matches: dictionary of matched path components. See the Resource documentation for mor information
@@ -289,11 +309,12 @@ class Request(object):
     :attr uri: the raw request uri
     """
 
-    def __init__(self, method, uri, stream, headers):
+    def __init__(self, addr, method, uri, stream, headers):
         super(Request, self).__init__()
 
         parsed = urlparse(unquote(uri))
 
+        self.client_address = addr
         self.method = method
         self.url = uri
         self.location = parsed.path
@@ -331,7 +352,10 @@ class RequestFactory(http.Request):
         t0 = time.perf_counter()
         router = self.channel.requestRouter
 
+        addr = self.getClientAddress()
+
         req = Request(
+            (addr.host, addr.port),
             self.method.decode("utf-8"),
             self.uri.decode("utf-8"),
             self.content,

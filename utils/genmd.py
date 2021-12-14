@@ -68,6 +68,7 @@ def parse_doc(doc, markup='param'):
             paragraphs[-1].append(src_line)
             if src_line.lstrip().startswith("```"):
                 code_block = False
+                paragraphs.append([])
             continue
 
         line = src_line.strip()
@@ -116,6 +117,11 @@ def parse_doc(doc, markup='param'):
             params[name.strip()] = text.strip()
             paragraphs.pop(i)
         elif paragraph[0].startswith(":return"):
+            # parse
+            # ":return x : y"
+            # ":return: y"
+            # ":returns: y"
+            # yield y as a decscription of the return value
             text = ' '.join(paragraph)
             text = text[len(":return"):]
             name, text = text.split(':', 1)
@@ -469,6 +475,29 @@ def md_misc():
         for cls, name in classes:
             genmd_cls(wf, cls, name)
 
+def md_http():
+
+    doc = """
+    # Utility Classes
+
+    """.replace("\n    ", "")
+
+    classes = [
+        (mpgameserver.http_server.Resource, None),
+        (mpgameserver.http_server.Request, None),
+        (mpgameserver.http_server.Router, None),
+    ]
+    with open("docs/http.md", "w") as wf:
+        wf.write("[Home](../README.md)\n\n")
+        wf.write("\n")
+        wf.write(doc)
+        wf.write("\n")
+
+        genmd_index(wf, classes)
+
+        for cls, name in classes:
+            genmd_cls(wf, cls, name)
+
 def md_event_dispatch():
 
     doc = """
@@ -537,14 +566,15 @@ def md_experimental():
 
 def main():
 
-    md_server()
-    md_client()
-    md_network()
-    md_serializable()
-    md_crypto()
-    md_misc()
-    md_event_dispatch()
-    md_experimental()
+    #md_server()
+    #md_client()
+    #md_network()
+    #md_serializable()
+    #md_crypto()
+    #md_misc()
+    #md_event_dispatch()
+    #md_experimental()
+    md_http()
 
 if __name__ == '__main__':
     main()

@@ -9,9 +9,10 @@ import json
 import sys
 
 from .serializable import Serializable, serialize_registry
-from .http_server import Response, JsonResponse, SerializableResponse
+from .http_server import Response, ErrorResponse, JsonResponse, SerializableResponse
 
 from urllib.parse import quote
+from urllib.error import URLError, HTTPError
 from concurrent.futures import ThreadPoolExecutor
 
 import logging
@@ -60,6 +61,9 @@ def make_request(method, url, payload, query, headers):
     #     payload = payload.dumpb()
     #      headers['Content-Type'] = "application/json"
 
+    if isinstance(payload, dict):
+        payload = json.dumps(payload).encode("utf-8")
+
     if isinstance(payload, Serializable):
         payload = payload.dumpb()
         headers['Content-Type'] = "application/x-serializable"
@@ -69,7 +73,22 @@ def make_request(method, url, payload, query, headers):
             headers['Content-Length'] = len(payload)
 
     req = urllib.request.Request(url, data=payload, headers=headers, method=method)
-    response = urllib.request.urlopen(req)
+
+    try:
+        response = urllib.request.urlopen(req)
+    except HTTPError as e:
+        # http_error.reason
+        body = e.read()
+        if e.headers.get('Content-Type', None) == "application/json":
+            try:
+                body = json.loads(body)
+            except Exception:
+                logging.exception("unable to parse json response")
+                pass
+        return ErrorResponse(body, e.code, e.headers)
+    except URLError as e:
+        return ErrorResponse(str(e), 408, {})
+
     data = response.read()
 
     content_type = None

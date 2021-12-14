@@ -717,11 +717,13 @@ class ConnectionStatus(SerializableEnum):
     :attr CONNECTED: the client is connected, keys are set
     :attr DISCONNECTING: the client is closing the connection gracefully
     :attr DISCONNECTED: the client is not connected
+    :attr DROPPED: the client lost communication with the server
     """
     CONNECTING    = 1
     CONNECTED     = 2
     DISCONNECTING = 3
     DISCONNECTED  = 4
+    DROPPED       = 5
 
 class ConnectionQuality(SerializableEnum):
     EXCELLENT = 1
@@ -1265,7 +1267,7 @@ class ConnectionBase(object):
         try:
             self.bitfield_msg.insert(msgseq)
         except DuplicationError:
-            print("drop duplicated seq", msgseq, Serializable.loadb(msg))
+            print("drop duplicated seq", msgseq, type(Serializable.loadb(msg)))
             return
 
         if pkt_typ == PacketType.CLIENT_HELLO:
@@ -1442,6 +1444,9 @@ class ClientServerConnection(ConnectionBase):
             self.last_latency_update_time = i0
             if len(self.stats.latency) > 5 * 60:
                 self.stats.latency.pop(0)
+
+        if self.last_recv_time > 0 and t0 > self.last_recv_time + 5:
+            self.status = ConnectionStatus.DROPPED
 
         if self.time_client_hello_sent and self.connection_callback:
             # TODO: its possible for the server hello to come in after the timeout
