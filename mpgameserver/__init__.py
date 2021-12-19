@@ -12,7 +12,8 @@ from mpgameserver.serializable import SerializableType, Serializable, Serializab
 from mpgameserver.task import TaskPool
 from mpgameserver.timer import Timer
 from mpgameserver.twisted import TwistedServer, ThreadedServer
-from mpgameserver.http_server import get, put, delete, post, \
+from mpgameserver.http_server import path_join_safe, \
+    get, put, delete, post, \
     Router, Resource, HTTPServer, \
     Response, JsonResponse, SerializableResponse
 from mpgameserver.http_client import HTTPClient

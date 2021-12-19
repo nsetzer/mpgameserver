@@ -14,7 +14,7 @@ from .connection import ClientServerConnection, Packet, PacketHeader, \
 from . import crypto
 from .timer import Timer
 from .util import is_valid_ipv6_address
-import logging
+from .logger import mplogger
 
 class UdpClient(object):
     """
@@ -239,7 +239,7 @@ class UdpClient(object):
         if self.conn:
             self.conn.send(msg, retry=retry, callback=callback)
         else:
-            logging.error("client.send error: client not connected")
+            mplogger.error("client.send error: client not connected")
 
     def send_guaranteed(self, payload: bytes, callback:SendCallback=None):
         """ send the message and guarantee delivery by using RetryMode.RETRY_ON_TIMEOUT

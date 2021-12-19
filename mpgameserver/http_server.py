@@ -1,11 +1,12 @@
 #! cd .. && python -m demo.http
+import os
 import sys
 import json
 import time
 import gzip
 import io
-import logging
 import threading
+from threading import Thread
 
 from collections import defaultdict
 
@@ -19,9 +20,36 @@ import re
 from . import crypto
 from .serializable import Serializable
 
-from threading import Thread
+
+from .logger import mplogger
 
 # https://twistedmatrix.com/documents/21.2.0/api/twisted.web.http.Request.html
+
+def path_join_safe(root_directory: str, filename: str):
+    """
+    join the two path components ensuring that the returned value
+    exists with root_directory as prefix.
+
+    Using this function can prevent files not intended to be exposed by
+    a webserver from being served, by making sure the returned path exists
+    in a directory under the root directory.
+
+    :param root_directory: the root directory. This must allways be provided by a trusted source.
+    :param filename: a relative path to a file. This may be provided from untrusted input
+    """
+
+    root_directory = root_directory.replace("\\", "/")
+    filename = filename.replace("\\", "/")
+
+    # check for illegal path components
+    parts = set(filename.split("/"))
+    if ".." in parts or "." in parts:
+        raise ValueError("invalid path")
+
+    path = os.path.join(root_directory, filename)
+    path = os.path.abspath(path)
+
+    return path
 
 class Response(object):
     def __init__(self, payload=None, status_code=200, headers=None, compress=False):
@@ -133,7 +161,55 @@ def delete(path):
         return f
     return decorator
 
-class Resource(object):
+# https://www.python.org/dev/peps/pep-3115/
+
+class CaseInsensitiveDict(dict):
+    def __setitem__(self, key, value):
+        super().__setitem__(key.upper(), value)
+
+    def __getitem__(self, key):
+        return super().__getitem__(key.upper())
+
+    def __in__(self, key):
+        return super().__in__(key.upper())
+
+    def __contains__(self, key):
+        return super().__contains__(key.upper())
+
+    def get(self, key, default=None):
+        return super().get(key.upper(), default)
+
+class OrderedPropertyMap(dict):
+    def __init__(self):
+        self.member_names = []
+
+    def __setitem__(self, key, value):
+        # if the key is not already defined, add to the
+        # list of keys.
+        if key not in self:
+            self.member_names.append(key)
+
+        # Call superclass
+        dict.__setitem__(self, key, value)
+
+class OrderedClass(type):
+
+    # The prepare function
+    @classmethod
+    def __prepare__(metacls, name, bases): # No keywords in this case
+        return OrderedPropertyMap()
+
+    # The metaclass invocation
+    def __new__(cls, name, bases, classdict):
+        # Note that we replace the classdict with a regular
+        # dict before passing it to the superclass, so that we
+        # don't continue to record member names after the class
+        # has been created.
+        result = type.__new__(cls, name, bases, dict(classdict))
+        result.member_names = classdict.member_names
+        return result
+
+class Resource(object, metaclass=OrderedClass):
     """ A Resource is a collection of related endpoints that can be
     registered with a Router.
 
@@ -150,13 +226,13 @@ class Resource(object):
 
     ```
     /abc        - match exactly. e.g. '/abc'
-    /:abc       - match a path compenent exactly once. e.g. '/one' or '/two'
+    /:abc       - match a path component exactly once. e.g. '/one' or '/two'
     /:abc?      - match a path component 0 or 1 times. e.g. '/' or '/one'
     /:abc+      - match a path component 1 or more times. e.g. '/one' or '/one/two'
     /:abc*      - match a path component 0 or more times. e.g. '/' or '/one' or '/one/two'
     ```
 
-    When the router is attempting to match a path to a registerd endpoint,
+    When the router is attempting to match a path to a registered endpoint,
     the first successful match is used.
 
     Example:
@@ -187,7 +263,9 @@ class Resource(object):
 
         self._endpoints = []
 
-        for name in dir(self):
+        for name in self.member_names:
+            if name.startswith("_"):
+                continue
             attr = getattr(self, name)
             if hasattr(attr, '_endpoint'):
                 func = attr
@@ -241,7 +319,7 @@ class Router(object):
         Get the route for a given method and path
         """
         if method not in self.route_table:
-            logging.error("unsupported method: %s", method)
+            mplogger.error("unsupported method: %s", method)
             return None
 
         for re_ptn, tokens, callback in self.route_table[method]:
@@ -296,17 +374,17 @@ class Router(object):
         return (re.compile(re_str), tokens)
 
 class Request(object):
-    """ A Request contains information received from a client
+    """ A Request contains the information received from a client
 
 
     :attr client_address: the clients IP and port
-    :attr headers: a dictionary of HTTP headers
-    :attr location: the path component of the uri
-    :attr matches: dictionary of matched path components. See the Resource documentation for mor information
     :attr method: a bytes string containing the HTTP method
-    :attr query: dictionary of decoded query parameters
+    :attr url: the raw request uri
+    :attr location: the path component of the uri
     :attr stream: a File-like object containig the request content
-    :attr uri: the raw request uri
+    :attr headers: a dictionary bytes=>List[bytes] of HTTP headers
+    :attr matches: dictionary of matched path components. See the Resource documentation for more information
+    :attr query: dictionary str=>List[str] of decoded query parameters
     """
 
     def __init__(self, addr, method, uri, stream, headers):
@@ -343,6 +421,7 @@ class Request(object):
         return Serializable.loadb(self.stream.read())
 
 class RequestFactory(http.Request):
+    BUFFER_TX_SIZE = 2048
 
     def process(self):
         """ private method
@@ -354,12 +433,16 @@ class RequestFactory(http.Request):
 
         addr = self.getClientAddress()
 
+        headers = CaseInsensitiveDict()
+        for key, value in self.requestHeaders.getAllRawHeaders():
+            headers[key] = value
+
         req = Request(
             (addr.host, addr.port),
             self.method.decode("utf-8"),
             self.uri.decode("utf-8"),
             self.content,
-            self.requestHeaders)
+            headers)
 
         result = router.getRoute(req.method, req.location)
 
@@ -368,14 +451,10 @@ class RequestFactory(http.Request):
 
             req.matches = matches
 
-            # TODO: self.content is a file like object
-            #       for json: replace with json?
-            #       for serializeable replace?
-
             try:
                 response = callback(req)
             except Exception as e:
-                logging.exception("user callback failed")
+                mplogger.exception("user callback failed")
                 response = None
 
             if response is None:
@@ -400,15 +479,15 @@ class RequestFactory(http.Request):
                 if k.lower() == "content-length":
                     content_length = v
                 if not isinstance(v, str):
-                    logging.warning("header value is not a string. %s=%s", k, v)
+                    mplogger.warning("header value is not a string. %s=%s", k, v)
                     v = str(v)
                 self.setHeader(k, v)
 
             if hasattr(payload, "read"):
-                buf = payload.read(RequestHandler.BUFFER_TX_SIZE)
+                buf = payload.read(RequestFactory.BUFFER_TX_SIZE)
                 while buf:
                     self.write(buf)
-                    buf = payload.read(RequestHandler.BUFFER_TX_SIZE)
+                    buf = payload.read(RequestFactory.BUFFER_TX_SIZE)
             else:
                 if content_length is None:
                     content_length = str(len(payload))
@@ -424,7 +503,7 @@ class RequestFactory(http.Request):
                 payload.close()
 
             elapsed = int((time.perf_counter() - t0) * 1000)
-            logging.info("%016X %s:%s %s %3s t=%6d %-8s %s [%s] %s" % (
+            mplogger.info("%016X %s:%s %s %3s t=%6d %-8s %s [%s] %s" % (
                 threading.get_ident(),
                 self.getClientAddress().host,
                 self.getClientAddress().port,
@@ -468,3 +547,6 @@ class HTTPServer(object):
 
     def registerEndpoints(self, endpoints):
         self.router.registerEndpoints(endpoints)
+
+    def endpoints(self):
+        return self.router.endpoints

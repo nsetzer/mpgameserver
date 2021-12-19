@@ -96,6 +96,14 @@ class ConnectionInitTestCase(unittest.TestCase):
 
         self.assertEqual(s, "<BitField(0400_0000)>")
 
+    def test_bitfield_big(self):
+
+        field = BitField(256)
+        for i in range(512):
+            field.insert(SeqNum(i))
+
+        self.assertEqual(repr(field), "<BitField(0400_0000)>")
+
     def test_conn_handle_first(self):
         """
         two packets are received in the correct sequential order
@@ -362,7 +370,6 @@ class ConnectionInitTestCase(unittest.TestCase):
         self.assertEqual(len(datagram2), Packet.MAX_SIZE_CRC)
         # reset mtu for subsequent tests
         Packet.setMTU(1500)
-
 
 class ConnectionTestCase(unittest.TestCase):
 

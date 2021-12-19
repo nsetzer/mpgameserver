@@ -263,7 +263,7 @@ class EllipticCurvePrivateKey(object):
 
         return EllipticCurvePublicKey(self.key.public_key())
 
-    def savePEM(path):
+    def savePEM(self, path):
         with open(path, "w") as wf:
             wf.write(self.getPrivateKeyPEM())
 

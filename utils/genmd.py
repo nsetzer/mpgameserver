@@ -320,7 +320,7 @@ def genmd_enum(stream, cls, name=None, cls_vars=None):
             desc = attrs.get(attr, "")
             stream.write("| %s | %s | %s |\n" % (attr, value, desc))
 
-def genmd_index(wf, classes=[], enums=[]):
+def genmd_index(wf, classes=[], enums=[], functions=[]):
     for cls, name, *rest in classes:
         if name is None:
             name = cls.__name__
@@ -330,6 +330,12 @@ def genmd_index(wf, classes=[], enums=[]):
         if name is None:
             name = cls.__name__
         wf.write("* [%s](#%s)\n" %(name, name.lower()))
+
+    for fn, name in functions:
+        if name is None:
+            name = fn.__name__
+        wf.write("* [%s](#%s)\n" %(name, name.lower()))
+
 
 def md_server():
 
@@ -478,7 +484,9 @@ def md_misc():
 def md_http():
 
     doc = """
-    # Utility Classes
+    # HTTP/TCP Protocol
+
+
 
     """.replace("\n    ", "")
 
@@ -486,6 +494,16 @@ def md_http():
         (mpgameserver.http_server.Resource, None),
         (mpgameserver.http_server.Request, None),
         (mpgameserver.http_server.Router, None),
+        (mpgameserver.http_server.Response, None),
+        (mpgameserver.http_server.ErrorResponse, None),
+        (mpgameserver.http_server.JsonResponse, None),
+        (mpgameserver.http_server.SerializableResponse, None),
+        (mpgameserver.http_server.HTTPServer, None),
+        (mpgameserver.http_client.HTTPClient, None),
+    ]
+    enums=[]
+    functions = [
+        (mpgameserver.http_server.path_join_safe, None),
     ]
     with open("docs/http.md", "w") as wf:
         wf.write("[Home](../README.md)\n\n")
@@ -493,10 +511,15 @@ def md_http():
         wf.write(doc)
         wf.write("\n")
 
-        genmd_index(wf, classes)
+        genmd_index(wf, classes, enums, functions)
 
         for cls, name in classes:
             genmd_cls(wf, cls, name)
+
+        wf.write("\n## :cherry_blossom: Functions:\n\n")
+        for fn, name in functions:
+            genmd_function(wf, fn, name)
+
 
 def md_event_dispatch():
 

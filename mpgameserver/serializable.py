@@ -67,10 +67,11 @@ import struct
 from typing import NewType, Generic, List, Dict, Tuple, get_args, get_origin
 from collections.abc import Iterable, Sequence, Mapping
 import sys
-import logging
 from io import BytesIO
 from enum import Enum
 import gzip
+
+from .logger import mplogger
 
 # maximum string or bytes length is 1mb.
 MAX_BYTES_LENGTH = 2**20
@@ -157,7 +158,7 @@ class SerializableType(type):
         cls._fields = tuple(name for name in cls.__dict__ if ispublic(cls, name))
         for field in cls._fields:
             if field not in cls.__annotations__:
-                logging.info("missing annotation for %s.%s\n" % (cls.__name__, field))
+                mplogger.info("missing annotation for %s.%s\n" % (cls.__name__, field))
         return cls
 
     @staticmethod

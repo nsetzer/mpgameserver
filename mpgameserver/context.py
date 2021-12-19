@@ -1,11 +1,10 @@
 
 import os
 import sys
-import logging
 import struct
 
 from .crypto import EllipticCurvePrivateKey, EllipticCurvePublicKey
-from .logger import log, setupLogger
+from .logger import mplogger, setupLogger
 from typing import Set
 
 class ServerContext(object):
@@ -42,7 +41,7 @@ class ServerContext(object):
 
         self.access_log = None
 
-        self.log = log
+        self.log = mplogger
 
         self.connection_timeout = 5.0
         self.temp_connection_timeout = 2.0

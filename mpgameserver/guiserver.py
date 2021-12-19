@@ -3,7 +3,6 @@
 
 import os
 import sys
-import logging
 import time
 
 import pygame
@@ -18,6 +17,8 @@ from mpgameserver import crypto
 
 from mpgameserver.util import is_valid_ipv6_address
 from mpgameserver.graph import LineGraph, AreaGraph
+
+from .logger import mplogger
 
 try:
     from PIL import Image
@@ -423,7 +424,7 @@ class GuiServer(object):
 
                 pygame.display.flip()
             except Exception as e:
-                logging.exception("unhandled exception")
+                mplogger.exception("unhandled exception")
                 g.next_state = GameStates.ERROR
 
         pygame.quit()

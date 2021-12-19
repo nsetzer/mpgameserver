@@ -15,8 +15,6 @@ def basicConfig():
 
     logging.basicConfig(format='%(asctime)-15s %(levelname)s %(filename)s:%(funcName)s():%(lineno)d:%(message)s')
 
-log = logging.getLogger("mpgameserver")
-
 class PeerLogger(object):
     def __init__(self, addr):
         super(PeerLogger, self).__init__()
@@ -72,3 +70,6 @@ def setupLogger(logger_name, log_file):
     #    l.addHandler(streamHandler)
 
     return l
+
+log = logging.getLogger("mpgameserver")
+mplogger = log

@@ -28,7 +28,6 @@ import random
 import socket
 import struct
 import time
-import logging
 import math
 from threading import Thread, Lock, Condition
 
@@ -40,6 +39,7 @@ from .handler import EventHandler
 
 from .logger import LOGLEVEL_TRACE
 from .timer import Timer
+from .logger import mplogger
 
 def sleep(duration):
 
@@ -161,7 +161,7 @@ class UdpServerThread(Thread):
                     # message is from a new client
                     else:
                         if hdr.pkt_type != PacketType.CLIENT_HELLO:
-                            logging.warning("unexpected packet: %s %s", addr, hdr)
+                            mplogger.warning("unexpected packet: %s %s", addr, hdr)
                             continue
 
                         self.ctxt.log.info("%s:%d received new client", *addr)

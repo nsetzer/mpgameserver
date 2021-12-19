@@ -15,7 +15,7 @@ from urllib.parse import quote
 from urllib.error import URLError, HTTPError
 from concurrent.futures import ThreadPoolExecutor
 
-import logging
+from .logger import mplogger
 
 def asyncio_thread(loop):
     asyncio.set_event_loop(loop)
@@ -30,7 +30,7 @@ def make_request(method, url, payload, query, headers):
                      data to upload
     :param  query:   dictionary of query parameters to append to the url
                      this function will safely encode the parameters
-    :param  headers: dictionayr of request headers to send
+    :param  headers: dictionary of request headers to send
 
     """
 
@@ -83,7 +83,7 @@ def make_request(method, url, payload, query, headers):
             try:
                 body = json.loads(body)
             except Exception:
-                logging.exception("unable to parse json response")
+                mplogger.exception("unable to parse json response")
                 pass
         return ErrorResponse(body, e.code, e.headers)
     except URLError as e:
@@ -123,6 +123,7 @@ class RequestHandle(object):
         self.hid = handle_id
         handle_id += 1
         self.async_handle = None
+        self.callback = None
         self.response = None
         self.ready = False
 
@@ -160,32 +161,36 @@ class AsyncHTTPClientImpl(object):
 
         self.loop.call_soon_threadsafe(callback, *args)
 
-    def get(self, url, query=None, headers=None):
+    def get(self, url, query=None, headers=None, callback=None):
         handle = RequestHandle()
+        handle.callback = callback
         async_handle = self.loop.call_soon_threadsafe(execute_async_function,
             handle, make_request, ("GET", url, None, query, headers), {})
         handle.async_handle = async_handle
         self.handles.append(handle)
         return handle
 
-    def put(self, url, payload, query=None, headers=None):
+    def put(self, url, payload, query=None, headers=None, callback=None):
         handle = RequestHandle()
+        handle.callback = callback
         async_handle = self.loop.call_soon_threadsafe(execute_async_function,
             handle, make_request, ("PUT", url, payload, query, headers), {})
         handle.async_handle = async_handle
         self.handles.append(handle)
         return handle
 
-    def post(self, url, payload, query=None, headers=None):
+    def post(self, url, payload, query=None, headers=None, callback=None):
         handle = RequestHandle()
+        handle.callback = callback
         async_handle = self.loop.call_soon_threadsafe(execute_async_function,
             handle, make_request, ("POST", url, payload, query, headers), {})
         handle.async_handle = async_handle
         self.handles.append(handle)
         return handle
 
-    def delete(self, url, query=None, headers=None):
+    def delete(self, url, query=None, headers=None, callback=None):
         handle = RequestHandle()
+        handle.callback = callback
         async_handle = self.loop.call_soon_threadsafe(execute_async_function,
             handle, make_request, ("DELETE", url, None, query, headers), {})
         handle.async_handle = async_handle
@@ -200,6 +205,8 @@ class AsyncHTTPClientImpl(object):
         while i < len(self.handles):
             handle = self.handles[i]
             if handle.ready:
+                if handle.callback:
+                    handle.callback(handle.response)
                 yield handle
                 self.handles.pop(i)
             else:
@@ -216,23 +223,23 @@ class HTTPClient(object):
         self.client = AsyncHTTPClientImpl()
 
         if addr[0] == "localhost":
-            sys.stderr.write("warning: use 127.0.0.1 instead of localhost for server address\n")
+            sys.stderr.write("HTTP Client warning: use 127.0.0.1 instead of localhost for best performance\n")
 
-    def get(self, path, query=None, headers=None):
+    def get(self, path, query=None, headers=None, callback=None):
         url = "%s://%s:%d%s" % (self.protocol, *self.addr, path)
-        return self.client.get(url, query, headers)
+        return self.client.get(url, query, headers, callback)
 
-    def put(self, path, payload, query=None, headers=None):
+    def put(self, path, payload, query=None, headers=None, callback=None):
         url = "%s://%s:%d%s" % (self.protocol, *self.addr, path)
-        return self.client.put(url, payload, query, headers)
+        return self.client.put(url, payload, query, headers, callback)
 
-    def post(self, path, payload, query=None, headers=None):
+    def post(self, path, payload, query=None, headers=None, callback=None):
         url = "%s://%s:%d%s" % (self.protocol, *self.addr, path)
-        return self.client.post(url, payload, query, headers)
+        return self.client.post(url, payload, query, headers, callback)
 
-    def delete(self, path, query=None, headers=None):
+    def delete(self, path, query=None, headers=None, callback=None):
         url = "%s://%s:%d%s" % (self.protocol, *self.addr, path)
-        return self.client.delete(url, payload, query, headers)
+        return self.client.delete(url, payload, query, headers, callback)
 
     def pending(self):
         """ get the number of pending requests

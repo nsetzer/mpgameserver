@@ -1,10 +1,10 @@
 
 import sys
 import time
-import logging
 
 from threading import Thread, Lock, Condition
 from multiprocessing import Pool
+from .logger import mplogger
 
 class TaskPool(object):
     """ A Task Pool provides a thread safe mechanism for running long lived operations
@@ -17,7 +17,7 @@ class TaskPool(object):
     """
     def __init__(self, processes=1, maxtasksperchild=None):
         super(TaskPool, self).__init__()
-        logging.info("creating multiprocessing pool (n=%s)", maxtasksperchild)
+        mplogger.info("creating multiprocessing pool (n=%s)", maxtasksperchild)
         self.pool = Pool(processes, maxtasksperchild=maxtasksperchild)
 
         self._lk_result = Lock()
@@ -62,7 +62,7 @@ class TaskPool(object):
                     try:
                         callback(result)
                     except Exception as e:
-                        logging.exception("task callback failed")
+                        mplogger.exception("task callback failed")
 
     def shutdown(self):
         """ cancel running tasks and stop the task pool """
