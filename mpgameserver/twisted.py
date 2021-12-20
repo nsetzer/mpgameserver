@@ -2,7 +2,7 @@
 import sys
 
 from twisted.internet.protocol import DatagramProtocol
-from twisted.internet import reactor
+from twisted.internet import ssl, reactor
 try:
     from twisted.internet import ssl
 except ImportError as e:
@@ -109,17 +109,22 @@ class TwistedServer(DatagramProtocol):
             cert = ssl.PrivateCertificate.loadPEM(keyAndCert)
 
         if self._tcp_addr:
-            self.ctxt.log.info("tcp server listening on %s:%d" % (self._tcp_addr))
+
 
             if cert:
+                # https://stackoverflow.com/questions/57812501/python-twisted-is-it-possible-to-reload-certificates-on-the-fly
+                opts = cert.options()
+                # TODO: setting opts._context = None should force a reload of the cert file
                 port = reactor.listenSSL(self._tcp_addr[1],
                     HTTPFactory(router=self._tcp_router),
-                    cert.options(),
+                    opts,
                     interface=self._tcp_addr[0])
+                self.ctxt.log.info("tls server listening on %s:%d" % (self._tcp_addr))
             else:
                 port = reactor.listenTCP(self._tcp_addr[1],
                     HTTPFactory(router=self._tcp_router),
                     interface=self._tcp_addr[0])
+                self.ctxt.log.info("tcp server listening on %s:%d" % (self._tcp_addr))
 
         reactor.run(installSignalHandlers=0)
         self.ctxt.log.info("server stopped")

@@ -4,7 +4,8 @@ import time
 import asyncio
 import threading
 import urllib.request
-import requests
+import ssl
+# import requests
 import json
 import sys
 
@@ -74,8 +75,14 @@ def make_request(method, url, payload, query, headers):
 
     req = urllib.request.Request(url, data=payload, headers=headers, method=method)
 
+    # TODO: the creation of this context needs to be exposed at a higher level
+    # users of mpgameserver will need to decide on the parameters, if any
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
     try:
-        response = urllib.request.urlopen(req)
+        response = urllib.request.urlopen(req, context=ctx)
     except HTTPError as e:
         # http_error.reason
         body = e.read()
@@ -147,15 +154,19 @@ class AsyncHTTPClientImpl(object):
         self.handles = []
 
     def start(self):
+        if self.loop is None:
+            raise RuntimeError("start after stop not supported")
+
         self.thread = threading.Thread(target=asyncio_thread, args=(self.loop,))
         self.thread.start()
 
     def stop(self):
 
-        print("stopping")
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        self.thread.join()
-        print("stopped")
+        if self.thread:
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            self.thread.join()
+            self.loop = None
+            self.thread = None
 
     def call_soon_threadsafe(self, callback, *args):
 
@@ -214,11 +225,11 @@ class AsyncHTTPClientImpl(object):
 
 class HTTPClient(object):
     """docstring for HTTPClient"""
-    def __init__(self, addr):
+    def __init__(self, addr, protocol="http"):
         super(HTTPClient, self).__init__()
 
         self.addr = addr
-        self.protocol = "http"
+        self.protocol = protocol
 
         self.client = AsyncHTTPClientImpl()
 
