@@ -15,16 +15,19 @@ from .connection import ServerContext, ConnectionStatus, \
 from .http_server import HTTPFactory
 
 from threading import Thread
+import signal
 
 class TwistedServer(DatagramProtocol):
     """ a headless server implementation
     """
 
-    def __init__(self, ctxt, addr):
+    def __init__(self, ctxt, addr, install_signals=True):
         """
         :param ctxt: A [ServerContext](#servercontext) instance
         :param addr: 2-tuple host, port
             host can be "::" to bind to an ipv6 address
+        :param install_signals: whether to install a default signal handler
+            when running on UNIX style operating systems
         """
 
         self.addr = addr
@@ -37,6 +40,8 @@ class TwistedServer(DatagramProtocol):
         self._tcp_addr = None
         self._tcp_privkey_path = None
         self._tcp_cert_path = None
+
+        self.install_signals = install_signals
 
     def sendPackets(self, seq):
         """ private send a sequence of packets
@@ -84,14 +89,17 @@ class TwistedServer(DatagramProtocol):
         self._tcp_privkey_path = privkey
         self._tcp_cert_path = cert
 
+    def _handle_signal(self, *args):
+        self.stop()
+
     def run(self):
         """ run the server.
 
         """
 
-        if sys.platform != "win32":
-            # todo: install signal handler?
-            pass
+        if self.install_signals and sys.platform != "win32":
+            for sig in (signal.SIGABRT, signal.SIGILL, signal.SIGINT, signal.SIGSEGV, signal.SIGTERM):
+                signal.signal(sig, self._handle_signal)
 
         self.thread.start()
 
@@ -126,6 +134,10 @@ class TwistedServer(DatagramProtocol):
                     interface=self._tcp_addr[0])
                 self.ctxt.log.info("tcp server listening on %s:%d" % (self._tcp_addr))
 
+            for endpt in self._tcp_router.endpoints:
+                print("%-7s %s" % (endpt.method, endpt.pattern))
+
+
         reactor.run(installSignalHandlers=0)
         self.ctxt.log.info("server stopped")
 
@@ -149,7 +161,7 @@ class ThreadedServer(Thread):
         super(ThreadedServer, self).__init__()
         self.daemon = True
 
-        self.server = TwistedServer(ctxt, addr)
+        self.server = TwistedServer(ctxt, addr, install_signals=False)
 
     def listenTCP(self, router, addr, privkey=None, cert=None):
         """

@@ -543,6 +543,7 @@ class Serializable(object, metaclass=SerializableType):
 
         """
         #stream.write(struct.pack(">H", self.type_id))
+        serialize_value(stream, len(self._fields))
         for field in self._fields:
             serialize_value(stream, getattr(self, field), field)
 
@@ -561,7 +562,10 @@ class Serializable(object, metaclass=SerializableType):
         reimplementing this function for that type.
 
         """
-        for field in self._fields:
+        #for field in self._fields:
+        num_fields = deserialize_value(stream, **kwargs)
+        for i in range(num_fields):
+            field = self._fields[i]
             setattr(self, field, deserialize_value(stream, **kwargs))
         return self
 
@@ -757,8 +761,9 @@ class Serializable(object, metaclass=SerializableType):
                     raise TypeError("%s != %s" % (origin, type(record)))
 
             else:
-                obj[field] = _toJsonBasic(self.__annotations__[field],
-                    field, getattr(self, field))
+                type_ = self.__annotations__[field]
+                value = getattr(self, field)
+                obj[field] = _toJsonBasic(type_, field, value)
         return obj
 
 class SerializableEnumType(type):

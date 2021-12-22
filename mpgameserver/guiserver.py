@@ -26,6 +26,7 @@ try:
 except ImportError as e:
     has_pillow = False
 
+import signal
 
 class Namespace(object):
     def __init__(self):
@@ -379,6 +380,11 @@ class GuiServer(object):
 
         self._state.handle_event(event)
 
+    def _handle_signal(self, *args):
+
+        g.server.stop()
+        self._setActive(False)
+
     def run(self):
         """ run the server.
 
@@ -396,6 +402,10 @@ class GuiServer(object):
         update_step = 1 / g.FPS
 
         g.server.start()
+
+        if sys.platform != "win32":
+            for sig in (signal.SIGABRT, signal.SIGILL, signal.SIGINT, signal.SIGSEGV, signal.SIGTERM):
+                signal.signal(sig, self._handle_signal)
 
         while self._active:
 

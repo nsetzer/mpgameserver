@@ -8,7 +8,7 @@ import io
 import threading
 from threading import Thread
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
@@ -161,7 +161,66 @@ def delete(path):
         return f
     return decorator
 
-# https://www.python.org/dev/peps/pep-3115/
+def header(header):
+    def decorator(f):
+        if not hasattr(f, '_header'):
+            f._header = []
+        f._header.append(header)
+        return f
+    return decorator
+
+def param(param):
+    def decorator(f):
+        if not hasattr(f, '_param'):
+            f._param = []
+        f._param.append(param)
+        return f
+    return decorator
+
+def ratelimit(rate):
+    """ not implemented
+
+    this could be used to set a per-route ratelimit
+    currently there is a global rate limit for all routes instead.
+
+    """
+
+    parts = rate.split("/")
+    if len(parts) != 2:
+        raise ValueError(rate)
+    if parts[1] not in ("second", "minute", "hour", "day"):
+        raise ValueError(rate)
+
+    count = int(parts[0])
+    unit = parts[1]
+
+    def decorator(f):
+        f._ratelimit = (count, unit)
+        return f
+
+    return decorator
+
+class CacheDict(OrderedDict):
+
+    def __init__(self, *args, cache_len: int = 128, **kwargs):
+        assert cache_len > 0
+        self.cache_len = cache_len
+
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        super().move_to_end(key)
+
+        while len(self) > self.cache_len:
+            oldkey = next(iter(self))
+            super().__delitem__(oldkey)
+
+    def __getitem__(self, key):
+        val = super().__getitem__(key)
+        super().move_to_end(key)
+
+        return val
 
 class CaseInsensitiveDict(dict):
     def __setitem__(self, key, value):
@@ -180,6 +239,7 @@ class CaseInsensitiveDict(dict):
         return super().get(key.upper(), default)
 
 class OrderedPropertyMap(dict):
+    # https://www.python.org/dev/peps/pep-3115/
     def __init__(self):
         self.member_names = []
 
@@ -208,6 +268,76 @@ class OrderedClass(type):
         result = type.__new__(cls, name, bases, dict(classdict))
         result.member_names = classdict.member_names
         return result
+
+class RollingCounter(object):
+    """
+
+    """
+    def __init__(self, interval_ms, bins=4):
+        super(RollingCounter, self).__init__()
+
+        self.interval_ms = interval_ms // bins
+        self._current_index = 0
+        self._bins = bins
+        self._counts = []
+        self._count = 0
+
+    def increment(self):
+
+        ms = int(time.time()*1000)
+
+        # this counts events within a given window
+        # if the interval is 1000ms and there are 4 bins
+        # then it counts the number of events within a
+        # 250 ms window.
+        # However the windows may not be consecutive in time.
+        # which may do better at capturing bursty activity
+
+        index = ms // self.interval_ms
+        if index != self._current_index:
+            # if more than one period elapsed since the last event
+            # reset the counter completely
+            if index - self._current_index > self._bins:
+                self._counts = [0]
+            else:
+                self._counts.append(0)
+                while len(self._counts) > self._bins:
+                    self._counts.pop(0)
+                self._current_index = index
+
+        self._counts[-1] += 1
+        self._count =sum(self._counts)
+
+        return self._count
+
+    def value(self):
+        return self._count
+
+class RateLimiter(object):
+    def __init__(self, limit, interval_ms, capacity):
+        super(RateLimiter, self).__init__()
+
+        self.counter = CacheDict(capacity=capacity)
+        self.blocked = CacheDict(capacity=capacity)
+        self.limit = limit
+        self.interval_ms = interval_ms
+
+    def insert(self, k):
+
+        if k not in self.counter:
+            self.counter[k] = RollingCounter(self.interval_ms, bins=4)
+
+        count = self.counter[k].increment()
+
+        return count > self.limit
+
+class Endpoint(object):
+    """docstring for Endpoint"""
+    def __init__(self, method, pattern, callback):
+        super(Endpoint, self).__init__()
+        self.method = method
+        self.pattern = pattern
+        self.callback = callback
 
 class Resource(object, metaclass=OrderedClass):
     """ A Resource is a collection of related endpoints that can be
@@ -273,7 +403,13 @@ class Resource(object, metaclass=OrderedClass):
                 path = func._endpoint
                 methods = func._methods
 
-                self._endpoints.append((methods[0], path, attr))
+                endpt = Endpoint(methods[0], path, attr)
+                if hasattr(endpt, '_ratelimit'):
+                    endpt.ratelimit = getattr(endpt, '_ratelimit')
+                else:
+                    endpt.ratelimit = (1, "second")
+
+                self._endpoints.append(endpt)
 
     def endpoints(self):
         """
@@ -297,6 +433,10 @@ class Router(object):
         }
         self.endpoints = []
 
+        # a rate limiter which limits requests per IP
+        # to 100 requests per minute, for up to 1024 clients
+        self.limiter = RateLimiter(5, 60*1000, 1024)
+
     def registerEndpoints(self, endpoints):
         """ register endpoints with the router
 
@@ -308,10 +448,10 @@ class Router(object):
         if isinstance(endpoints, Resource):
             endpoints = endpoints.endpoints()
 
-        for method, pattern, callback in endpoints:
-            regex, tokens = self.patternToRegex(pattern)
-            self.route_table[method].append((regex, tokens, callback))
-            self.endpoints.append((method, pattern))
+        for endpt in endpoints:
+            regex, tokens = self.patternToRegex(endpt.pattern)
+            self.route_table[endpt.method].append((regex, tokens, endpt))
+            self.endpoints.append(endpt)
 
     def getRoute(self, method, path):
         """ private method
@@ -322,10 +462,10 @@ class Router(object):
             mplogger.error("unsupported method: %s", method)
             return None
 
-        for re_ptn, tokens, callback in self.route_table[method]:
+        for re_ptn, tokens, endpt in self.route_table[method]:
             m = re_ptn.match(path)
             if m:
-                return callback, {k: v for k, v in zip(tokens, m.groups())}
+                return endpt, {k: v for k, v in zip(tokens, m.groups())}
         return None
 
     def patternToRegex(self, pattern):
@@ -437,34 +577,42 @@ class RequestFactory(http.Request):
         for key, value in self.requestHeaders.getAllRawHeaders():
             headers[key] = value
 
+        hostport = (addr.host, addr.port)
+
         req = Request(
-            (addr.host, addr.port),
-            self.method.decode("utf-8"),
-            self.uri.decode("utf-8"),
-            self.content,
-            headers)
+                hostport,
+                self.method.decode("utf-8"),
+                self.uri.decode("utf-8"),
+                self.content,
+                headers)
 
-        result = router.getRoute(req.method, req.location)
+        if router.limiter.insert(addr.host):
 
-        if result:
-            callback, matches = result
+            response = JsonResponse({'error': 'Too Many Requests'}, 429)
 
-            req.matches = matches
-
-            try:
-                response = callback(req)
-            except Exception as e:
-                mplogger.exception("user callback failed")
-                response = None
-
-            if response is None:
-                response = JsonResponse({'error':
-                    'endpoint failed to return a response'}, 500)
-
-            if not isinstance(response, Response):
-                raise TypeError(type(response))
         else:
-            response = JsonResponse({'error': 'path not found'}, 404)
+
+            result = router.getRoute(req.method, req.location)
+
+            if result:
+                endpt, matches = result
+
+                req.matches = matches
+
+                try:
+                    response = endpt.callback(req)
+                except Exception as e:
+                    mplogger.exception("user callback failed")
+                    response = None
+
+                if response is None:
+                    response = JsonResponse({'error':
+                        'endpoint failed to return a response'}, 500)
+
+                if not isinstance(response, Response):
+                    raise TypeError(type(response))
+            else:
+                response = JsonResponse({'error': 'path not found'}, 404)
 
         # this may mutate the headers
         payload = response._get_payload(req)
@@ -484,12 +632,15 @@ class RequestFactory(http.Request):
                 self.setHeader(k, v)
 
             if hasattr(payload, "read"):
+                content_length = 0
                 buf = payload.read(RequestFactory.BUFFER_TX_SIZE)
                 while buf:
                     self.write(buf)
+                    content_length += len(buf)
                     buf = payload.read(RequestFactory.BUFFER_TX_SIZE)
             else:
                 if content_length is None:
+                    # content length has not been set
                     content_length = str(len(payload))
                     self.setHeader("Content-Length", content_length)
                 self.write(payload)
@@ -532,17 +683,45 @@ class HTTPFactory(http.HTTPFactory):
         return self._channel()
 
 class HTTPServer(object):
-    """docstring for TwistedTCPServer"""
-    def __init__(self, addr):
+    def __init__(self, addr, privkey=None, cert=None):
         super(HTTPServer, self).__init__()
 
         self.addr = addr
         self.router = Router()
 
+        self.privatekey_path = privkey
+        self.certificate_path = cert
+
     def run(self):
-        reactor.listenTCP(self.addr[1],
-            HTTPFactory(router=self.router),
-            interface=self.addr[0])
+
+        cert = None
+        if self.privatekey_path is not None:
+            keyAndCert = ""
+            with open(self.privatekey_path) as key:
+                keyAndCert += key.read()
+            with open(self.certificate_path) as cert:
+                keyAndCert += cert.read()
+
+            cert = ssl.PrivateCertificate.loadPEM(keyAndCert)
+
+        if cert:
+            # https://stackoverflow.com/questions/57812501/python-twisted-is-it-possible-to-reload-certificates-on-the-fly
+            opts = cert.options()
+            # TODO: setting opts._context = None should force a reload of the cert file
+            port = reactor.listenSSL(self.addr[1],
+                HTTPFactory(router=self.router),
+                opts,
+                interface=self.addr[0])
+            mplogger.info("tls server listening on %s:%d" % (self.addr))
+        else:
+            reactor.listenTCP(self.addr[1],
+                HTTPFactory(router=self.router),
+                interface=self.addr[0])
+            mplogger.info("tcp server listening on %s:%d" % (self.addr))
+
+        for endpt in self.router.endpoints:
+            print("%-7s %s" % (endpt.method, endpt.pattern))
+
         reactor.run()
 
     def registerEndpoints(self, endpoints):

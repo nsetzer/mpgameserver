@@ -15,7 +15,7 @@ from .http_server import Response, ErrorResponse, JsonResponse, SerializableResp
 from urllib.parse import quote
 from urllib.error import URLError, HTTPError
 from concurrent.futures import ThreadPoolExecutor
-
+from http.client import RemoteDisconnected
 from .logger import mplogger
 
 def asyncio_thread(loop):
@@ -50,6 +50,11 @@ def make_request(method, url, payload, query, headers):
     if headers is None:
         headers = {}
 
+    #args = ["curl", "-k"]
+    #args.extend([("-H%s=\"%s\"" % (k, v)) for k, v in headers.items()])
+    #args.append("\"%s\"" % url)
+    #print(" ".join(args))
+
     # if the payload is a file like object, read the content inside
     # this thread and prepare for sending.
     if hasattr(payload, "read"):
@@ -83,6 +88,8 @@ def make_request(method, url, payload, query, headers):
 
     try:
         response = urllib.request.urlopen(req, context=ctx)
+    except RemoteDisconnected as e:
+        return ErrorResponse(str(e), 408, {})
     except HTTPError as e:
         # http_error.reason
         body = e.read()

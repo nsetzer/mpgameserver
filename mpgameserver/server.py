@@ -118,7 +118,7 @@ class UdpServerThread(Thread):
 
         _queue = []
 
-        t0 = time.time()
+        t0 = time.monotonic()
         prev_report = int(t0)
         dt = self.ctxt.interval
 
@@ -127,12 +127,12 @@ class UdpServerThread(Thread):
         except Exception as e:
             self.ctxt.log.exception("unhandled exception during startup")
 
-        previous_update_time = time.time()
+        previous_update_time = time.monotonic()
 
         self.ctxt.log.info("server main loop starting")
         while self.ctxt._active:
 
-            p1 = time.time()
+            p1 = time.monotonic()
 
             # process messages received from the clients
             while _queue:
@@ -175,7 +175,7 @@ class UdpServerThread(Thread):
 
             # run the handler update event
             # measure the time since the last tick update
-            u0 = p2 = time.time()
+            u0 = p2 = time.monotonic()
             tick_time = u0 - previous_update_time
             previous_update_time = u0
             try:
@@ -184,7 +184,7 @@ class UdpServerThread(Thread):
                 self.ctxt.log.exception("unhandled error during handler update")
 
             # update all of the connections, handle disconnect events
-            p3 = time.time()
+            p3 = time.monotonic()
             sending = []
             for client in list(self.ctxt.connections.values()):
                 try:
@@ -227,7 +227,7 @@ class UdpServerThread(Thread):
 
             self.send(sending)
 
-            p4 = time.time()
+            p4 = time.monotonic()
 
             # ------
 
@@ -240,17 +240,17 @@ class UdpServerThread(Thread):
                         if not self.ctxt.connections:
                             self.cv_queue.wait()
 
-                            previous_update_time = time.time()
+                            previous_update_time = time.monotonic()
                         else:
                             #self.cv_queue.wait(self.ctxt.interval/3)
-                            #t0 = time.time()
+                            #t0 = time.monotonic()
                             break
 
                     self.received_count += len(self.queue)
                     _queue.extend(self.queue)
                     self.queue = []
 
-            t1 = time.time()
+            t1 = time.monotonic()
 
             dt = min(self.ctxt.interval, t1 - t0)
             dt = t1 - t0
@@ -258,7 +258,7 @@ class UdpServerThread(Thread):
             if self.spt  < self.ctxt.interval:
                 sleep(sleep_for)
 
-            p5 = t0 = time.time()
+            p5 = t0 = time.monotonic()
 
             self.perf[0] += p5 - p1 # total elapsed time
             self.perf[1] += p2 - p1 # message handler

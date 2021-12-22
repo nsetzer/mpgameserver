@@ -17,7 +17,7 @@ class TaskPool(object):
     """
     def __init__(self, processes=1, maxtasksperchild=None):
         super(TaskPool, self).__init__()
-        mplogger.info("creating multiprocessing pool (n=%s)", maxtasksperchild)
+        mplogger.info("creating multiprocessing pool (n=%s)", processes)
         self.pool = Pool(processes, maxtasksperchild=maxtasksperchild)
 
         self._lk_result = Lock()
