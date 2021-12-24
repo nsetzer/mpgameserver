@@ -137,17 +137,19 @@ def get(path):
         return f
     return decorator
 
-def put(path):
+def put(path, max_content_length=5*1024*1024):
     """decorator which registers a class method as a PUT handler"""
     def decorator(f):
+        f._options = {'max_content_length': max_content_length}
         f._endpoint = path
         f._methods = ['PUT']
         return f
     return decorator
 
-def post(path):
+def post(path, max_content_length=5*1024*1024):
     """decorator which registers a class method as a POST handler"""
     def decorator(f):
+        f._options = {'max_content_length': max_content_length}
         f._endpoint = path
         f._methods = ['POST']
         return f
@@ -332,12 +334,15 @@ class RateLimiter(object):
         return count > self.limit
 
 class Endpoint(object):
-    """docstring for Endpoint"""
+
     def __init__(self, method, pattern, callback):
         super(Endpoint, self).__init__()
         self.method = method
         self.pattern = pattern
         self.callback = callback
+
+        self.ratelimit = None
+        self.options = {}
 
 class Resource(object, metaclass=OrderedClass):
     """ A Resource is a collection of related endpoints that can be
@@ -404,11 +409,8 @@ class Resource(object, metaclass=OrderedClass):
                 methods = func._methods
 
                 endpt = Endpoint(methods[0], path, attr)
-                if hasattr(endpt, '_ratelimit'):
-                    endpt.ratelimit = getattr(endpt, '_ratelimit')
-                else:
-                    endpt.ratelimit = (1, "second")
-
+                endpt.ratelimit = getattr(func, '_ratelimit', (1, "second"))
+                endpt.options = getattr(func, '_options', {})
                 self._endpoints.append(endpt)
 
     def endpoints(self):
@@ -586,6 +588,7 @@ class RequestFactory(http.Request):
                 self.content,
                 headers)
 
+        response = None
         if router.limiter.insert(addr.host):
 
             response = JsonResponse({'error': 'Too Many Requests'}, 429)
@@ -599,11 +602,34 @@ class RequestFactory(http.Request):
 
                 req.matches = matches
 
-                try:
-                    response = endpt.callback(req)
-                except Exception as e:
-                    mplogger.exception("user callback failed")
-                    response = None
+                # check the put/post options and validate the incoming request.
+                # ensure that the input is not too large
+                max_content_length = endpt.options.get('max_content_length', None)
+                if max_content_length is not None:
+                    request_content_length = 0
+
+                    if b'Content-Length' not in headers:
+                        response = JsonResponse({'error': 'Content-Length not specified'}, 411)
+                    else:
+                        try:
+                            request_content_length = int(headers[b'Content-Length'][0])
+                            if request_content_length < 0:
+                                request_content_length = 0
+                        except ValueError as e:
+                            request_content_length = 0
+                        except Exception as e:
+                            request_content_length = 0
+
+                    if request_content_length > max_content_length:
+                        response = JsonResponse({'error': 'Payload too large'}, 413)
+
+                # if the validations passed, run the user callback
+                if response is None:
+                    try:
+                        response = endpt.callback(req)
+                    except Exception as e:
+                        mplogger.exception("user callback failed")
+                        response = None
 
                 if response is None:
                     response = JsonResponse({'error':
