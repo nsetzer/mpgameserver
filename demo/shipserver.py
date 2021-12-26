@@ -212,19 +212,9 @@ def main():
     format = '%(asctime)-15s %(levelname)s %(filename)s:%(funcName)s():%(lineno)d:%(message)s'
     logging.basicConfig(level=logging.DEBUG, format=format)
 
-    # read the root key from stdin or use a default development key
-    key = None
-    if not sys.stdin.isatty():
-        r, _, _ = select.select([sys.stdin], [], [], 0)
-        if r:
-            key = EllipticCurvePrivateKey.fromPEM(sys.stdin.read())
-    if key is None:
-        sys.stderr.write("MpGameServer using unsafe test key\n")
-        key = EllipticCurvePrivateKey.unsafeTestKey()
-
     handler = ShipHandler()
 
-    ctxt = ServerContext(handler, key)
+    ctxt = ServerContext(handler)
 
     if '--gui' in sys.argv:
         server = GuiServer(ctxt, (host, port))

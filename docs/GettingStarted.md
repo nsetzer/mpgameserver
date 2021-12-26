@@ -56,14 +56,7 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(levelname)s %(filename)s:%(funcName)s():%(lineno)d:%(message)s')
 
-    # read the root key or use a default development key
-    if os.path.exists("root.key"):
-        with open("root.key") as key_file:
-            key = EllipticCurvePrivateKey.fromPEM(key_file.read())
-    else:
-        sys.stdout.write("using unsafe development key\n")
-
-    ctxt = ServerContext(MyGameEventHandler(), key)
+    ctxt = ServerContext(MyGameEventHandler())
 
     # command line switch controls running in headless mode (default)
     # or with the built-in gui server
@@ -90,12 +83,6 @@ import sys
 import pygame
 from mpgameserver import UdpClient, EllipticCurvePublicKey
 
-server_public_key = """
------BEGIN PUBLIC KEY-----
-<replace with server production public key>
------END PUBLIC KEY-----
-"""
-
 bg_color = (0,0,200)
 
 def onConnect(connected):
@@ -117,13 +104,6 @@ def main():
     """
     pygame.init()
 
-    # use the default key during development
-    # when releasing the game use the server public key
-    public_key = None
-    if '--dev' not in sys.argv:
-        # this fails if server_public_key has not been updated
-        public_key = EllipticCurvePublicKey.fromPEM(server_public_key)
-
     clock = pygame.time.Clock()
     FPS = 60
     host = 'localhost'
@@ -131,7 +111,7 @@ def main():
 
     screen = pygame.display.set_mode((640, 480))
 
-    client = UdpClient(public_key)
+    client = UdpClient()
     client.connect((host, port), callback=onConnect)
 
     while True:

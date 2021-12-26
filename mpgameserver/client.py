@@ -40,10 +40,7 @@ class UdpClient(object):
 
         self.disconnect_acked = False
 
-        if server_public_key is None:
-            self.server_public_key = crypto.EllipticCurvePublicKey.unsafeTestKey()
-        else:
-            self.server_public_key = server_public_key
+        self.server_public_key = server_public_key
 
         self.keep_alive_interval = .1
         self.temp_connection_timeout = 2.0

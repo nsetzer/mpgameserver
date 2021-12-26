@@ -41,7 +41,7 @@ def main():
             client.update(dt)
 
         if counter%20 == 0 and len(clients) < n_clients:
-            client = UdpClient(EllipticCurvePublicKey.unsafeTestKey())
+            client = UdpClient()
             client.remote_players = {}
             client.connect((host, port))
             clients.append(client)

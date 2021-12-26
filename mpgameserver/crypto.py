@@ -228,13 +228,6 @@ def decrypt_ctr(key, iv, aad, data):
 
     return decryptor.update(ct) + decryptor.finalize()
 
-default_root_private_key = """-----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgxdz3bYu851G3U/WV
-D/IWgibjkLuzun7fIJVuzUgBMI+hRANCAAT++syzk1rA41SiHAEi2xF16i1UdZFz
-IdIbFggAVGkstQ0tLpsGiCjYrsittFX1kdm4YS1V9N2HaJRBmZLLn6cb
------END PRIVATE KEY-----
-"""
-
 class EllipticCurvePrivateKey(object):
     """ A Elliptic Curve Private key used for key exchange and signing
 
@@ -273,17 +266,6 @@ class EllipticCurvePrivateKey(object):
         return self.key.sign(data, ec.ECDSA(hashes.SHA256()))
 
     @staticmethod
-    def unsafeTestKey():
-        """ a default key used for testing a client and server.
-
-        NOT FOR PRODUCTION USE
-        """
-
-        key = load_pem_private_key(default_root_private_key.encode("utf-8"),
-            password=None, backend=default_backend())
-        return EllipticCurvePrivateKey(key)
-
-    @staticmethod
     def new():
         key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         return EllipticCurvePrivateKey(key)
@@ -299,12 +281,6 @@ class EllipticCurvePrivateKey(object):
         return EllipticCurvePrivateKey(
             load_der_private_key(der,
                 password=None, backend=default_backend()))
-
-default_root_public_key = """-----BEGIN PUBLIC KEY-----
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/vrMs5NawONUohwBItsRdeotVHWR
-cyHSGxYIAFRpLLUNLS6bBogo2K7IrbRV9ZHZuGEtVfTdh2iUQZmSy5+nGw==
------END PUBLIC KEY-----
-"""
 
 class EllipticCurvePublicKey(object):
     """ A Elliptic Curve Private key used for key exchange and signing
@@ -361,15 +337,6 @@ class EllipticCurvePublicKey(object):
         raises an InvalidSignature exception on error
         """
         self.key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
-
-    @staticmethod
-    def unsafeTestKey():
-        """ a default key used for testing a client and server.
-
-        NOT FOR PRODUCTION USE
-        """
-        key = load_pem_public_key(default_root_public_key.encode("utf-8"), backend=default_backend())
-        return EllipticCurvePublicKey(key)
 
     @staticmethod
     def fromPEM(pem: str):

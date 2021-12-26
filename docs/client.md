@@ -52,6 +52,7 @@ The server public key is a Elliptic Curve public key that should be generated on
 
   
 
+* :small_blue_diamond: **`forceDisconnect`**`(self)` - 
 * :small_blue_diamond: **`getMessage`**`(self)` - get a single message received from the server
 
   * **:leftwards_arrow_with_hook: `returns:`** a tuple (seqnum, msg)
@@ -192,6 +193,7 @@ The connection status
 | CONNECTED | 2 | the client is connected, keys are set |
 | DISCONNECTING | 3 | the client is closing the connection gracefully |
 | DISCONNECTED | 4 | the client is not connected |
+| DROPPED | 5 | the client lost communication with the server |
 ---
 ## :large_orange_diamond: RetryMode
 The RetryMode is a per-message setting which controls how the message is delivered.

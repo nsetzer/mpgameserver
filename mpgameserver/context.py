@@ -19,7 +19,10 @@ class ServerContext(object):
         :param handler: an instance of an EventHandler
         :param root_key: an EllipticCurvePrivateKey used for signing messages.
             The client will use the public key to to verify the signature.
-            If not given a debug key is used.
+            If not given a new key is generated automatically.
+            Note: It is strongly encouraged to provide your own private key,
+            and to pre-share the corresponding public key with the client.
+            Doing so can avoid a man-in-the-middle attack.
         """
 
         super(ServerContext, self).__init__()
@@ -27,7 +30,7 @@ class ServerContext(object):
         self.handler = handler
 
         if root_key is None:
-            self.server_root_key = EllipticCurvePrivateKey.unsafeTestKey()
+            self.server_root_key = EllipticCurvePrivateKey.new()
         else:
             self.server_root_key = root_key
 

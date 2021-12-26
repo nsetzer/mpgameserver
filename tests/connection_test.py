@@ -96,14 +96,6 @@ class ConnectionInitTestCase(unittest.TestCase):
 
         self.assertEqual(s, "<BitField(0400_0000)>")
 
-    def test_bitfield_big(self):
-
-        field = BitField(256)
-        for i in range(512):
-            field.insert(SeqNum(i))
-
-        self.assertEqual(repr(field), "<BitField(0400_0000)>")
-
     def test_conn_handle_first(self):
         """
         two packets are received in the correct sequential order
@@ -442,10 +434,9 @@ class ConnectionTestCase(unittest.TestCase):
 
         client = ClientServerConnection(('0.0.0.0', 1234))
         client.clock = clock
-        client.setServerPublicKey(EllipticCurvePublicKey.unsafeTestKey())
         #client.status = ConnectionStatus.CONNECTED
 
-        ctxt = ServerContext(EventHandler(), EllipticCurvePrivateKey.unsafeTestKey())
+        ctxt = ServerContext(EventHandler(), None)
         server = ServerClientConnection(ctxt, ('0.0.0.0', 1235))
         server.clock = clock
         #server.status = ConnectionStatus.CONNECTED

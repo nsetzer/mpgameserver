@@ -1069,7 +1069,7 @@ class Engine(object):
         accumulator = 0.0
         update_step = 1 / g.FPS
 
-        g.client = UdpClient(EllipticCurvePublicKey.unsafeTestKey())
+        g.client = UdpClient()
 
         while self.active:
 

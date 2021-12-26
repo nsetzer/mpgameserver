@@ -15,17 +15,17 @@ class EventHandler(object):
     def starting(self):  # pragma: no cover
         """ server starting event
 
-        This event is raised when the server first starts
+        This event is called when the server first starts
         """
         pass
 
     def shutdown(self):  # pragma: no cover
         """ server shutdown event
 
-        This event is raised when the server is shutting down gracefully.
+        This event is called when the server is shutting down gracefully.
         It is the last event that will be called before the process exits
 
-        > :x: Do not depend on this event being raised. The server does not guarantee
+        > :x: Do not depend on this event being called. The server does not guarantee
         that this method will be called in the event of a crash or SIGKILL.
         """
         pass
@@ -35,7 +35,7 @@ class EventHandler(object):
 
         :param client: the client instance that connected
 
-        This event is raised when a client successfully completes the handshake
+        This event is called when a client successfully completes the handshake
 
         > :bulb: In order to send a message to all connected clients, record
         connections in a map client.token => client. Remove clients when they disconnect.
@@ -49,7 +49,7 @@ class EventHandler(object):
 
         :param client: the client instance that disconnected
 
-        This event is raised when a client disconnects or timeouts
+        This event is called when a client disconnects or timeouts
         """
         pass
 
@@ -58,7 +58,7 @@ class EventHandler(object):
 
         :param delta_t: elapsed time in seconds since the last update
 
-        This event is raised once per server tick
+        This event is called once per server tick
         """
         pass
 
@@ -68,9 +68,9 @@ class EventHandler(object):
         :param client: the client that sent the message
         :param msg: the message
 
-        This event is raised whenever a message is received from a remote client.
+        This event is called whenever a message is received from a remote client.
         If a datagram contained multiple messages, then this event will be
-        raised once for each message.
+        called once for each message.
         """
         pass
 

@@ -21,6 +21,7 @@
 
 #### Methods:
 
+* :small_blue_diamond: **`reset`**`(self)` - 
 * :small_blue_diamond: **`setInterval`**`(self, duration, callback)` - 
 
   * **:arrow_forward: `duration:`** 

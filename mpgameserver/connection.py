@@ -677,6 +677,7 @@ class HandshakeServerHelloMessage(Serializable):
     of the message.
 
     """
+    server_root_pubkey: object = None
     server_pubkey: object = None
     salt: bytes = b""
     token: int = 0
@@ -692,14 +693,26 @@ class HandshakeServerHelloMessage(Serializable):
 
         signature = kwargs['server_root_key'].sign(payload)
 
+        serialize_value(stream, kwargs['server_root_key'].getPublicKey().getBytes())
         serialize_value(stream, payload)
         serialize_value(stream, signature)
 
     def deserialize(self, stream, **kwargs):
+
+        root_pubkey = deserialize_value(stream, **kwargs)
+        self.server_root_pubkey = EllipticCurvePublicKey.fromBytes(root_pubkey)
+
         payload = deserialize_value(stream, **kwargs)
         signature = deserialize_value(stream, **kwargs)
 
-        kwargs['server_public_key'].verify(signature, payload)
+        # if no key is provided, use the key given by the server.
+        # Use a preshared key to avoid main in the middle attacks
+        if kwargs['server_public_key'] is None:
+            key = self.server_root_pubkey
+        else:
+            key = kwargs['server_public_key']
+
+        key.verify(signature, payload)
 
         temp = BytesIO(payload)
 
@@ -1242,7 +1255,7 @@ class ConnectionBase(object):
         try:
             pkt = Packet.from_bytes(hdr, self.session_key_bytes, datagram)
         except Exception as e:
-            self.log.exception("unable to decode packet %s", hdr)
+            #self.log.exception("unable to decode packet %s", hdr)
             self.stats.dropped += 1
             return False
 
@@ -1479,8 +1492,8 @@ class ClientServerConnection(ConnectionBase):
 
     def _sendClientHello(self):
         self.log.debug("send client hello")
-        if self.server_public_key is None:
-            raise ProtocolError("no public key set")
+        #if self.server_public_key is None:
+        #    raise ProtocolError("no public key set")
 
         msg = HandshakeClientHelloMessage()
         msg.client_pubkey = self.session_key.getPublicKey()

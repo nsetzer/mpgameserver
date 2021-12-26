@@ -146,7 +146,7 @@ This class is not thread safe. the configuration should be set prior to calling 
 
   * **:arrow_forward: `handler:`** an instance of an EventHandler
 
-  * **:arrow_forward: `root_key:`** an EllipticCurvePrivateKey used for signing messages. The client will use the public to to verify the signature. If not given a debug key is used.
+  * **:arrow_forward: `root_key:`** an EllipticCurvePrivateKey used for signing messages. The client will use the public key to to verify the signature. If not given a new key is generated automatically. Note: It is strongly encouraged to provide your own private key, and to pre-share the corresponding public key with the client. Doing so can avoid a man-in-the-middle attack.
 
   
 
@@ -210,11 +210,13 @@ a headless server implementation
 
 #### Constructor:
 
-* :small_blue_diamond: **`TwistedServer`**`(self, ctxt, addr)` - 
+* :small_blue_diamond: **`TwistedServer`**`(self, ctxt, addr, install_signals=True)` - 
 
   * **:arrow_forward: `ctxt:`** A [ServerContext](#servercontext) instance
 
   * **:arrow_forward: `addr:`** 2-tuple host, port host can be "::" to bind to an ipv6 address
+
+  * **:arrow_forward: `install_signals:`** whether to install a default signal handler when running on UNIX style operating systems
 
   
 
@@ -307,6 +309,7 @@ The connection status
 | CONNECTED | 2 | the client is connected, keys are set |
 | DISCONNECTING | 3 | the client is closing the connection gracefully |
 | DISCONNECTED | 4 | the client is not connected |
+| DROPPED | 5 | the client lost communication with the server |
 ---
 ## :large_orange_diamond: RetryMode
 The RetryMode is a per-message setting which controls how the message is delivered.

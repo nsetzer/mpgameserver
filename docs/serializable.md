@@ -150,6 +150,10 @@ Base class for defining a new serializable class. Sub Classes of Serializable ca
 
   * **:arrow_forward: `kwargs:`** extra arguments that are passed to deserialize, a specialization of deserialize can use kwargs to control how the class is deserialized
 
+  * **:leftwards_arrow_with_hook: `returns:`** self
+
+  Note: the return value can be any serializable type to implement versioning, old versions can be deserialized and then convert to the new version and return that instead by reimplementing this function for that type.
+
   
 
 * :small_blue_diamond: **`dumpb`**`(self, **kwargs)` - return a byte array representation of this class

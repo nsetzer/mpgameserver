@@ -589,14 +589,14 @@ def md_experimental():
 
 def main():
 
-    #md_server()
-    #md_client()
-    #md_network()
-    #md_serializable()
-    #md_crypto()
-    #md_misc()
-    #md_event_dispatch()
-    #md_experimental()
+    md_server()
+    md_client()
+    md_network()
+    md_serializable()
+    md_crypto()
+    md_misc()
+    md_event_dispatch()
+    md_experimental()
     md_http()
 
 if __name__ == '__main__':

@@ -45,7 +45,6 @@ class TestClient(object):
         self.addr = ("0.0.0.0", 0)
         self.sock = sock
         self.conn = ClientServerConnection(self.addr)
-        self.conn.setServerPublicKey(EllipticCurvePublicKey.unsafeTestKey())
 
         self.conn._sendClientHello()
 
@@ -194,6 +193,9 @@ class Server1TestCase(unittest.TestCase):
         server_sock, client_sock = MockUDPSocket.mkpair()
         client = TestClient(client_sock)
         key = EllipticCurvePrivateKey.new()
+        key2 = EllipticCurvePrivateKey.new().getPublicKey()
+
+        client.conn.setServerPublicKey(key2)
 
         ctxt = ServerContext(TestHandler(), key)
         thread = UdpServerThread(server_sock, ctxt)
