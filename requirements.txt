@@ -1,5 +1,8 @@
 cryptography>=3.0
 pygame>=2.0.0
 pillow>=7.2.0
-twisted>=20.3.0
 
+# Twisted
+twisted>=21.7.0
+pyOpenSSL>=21.0.0
+service-identity>=21.1.0

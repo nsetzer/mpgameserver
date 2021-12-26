@@ -25,12 +25,14 @@ keywords = ['PYGAME', 'MULTIPLAYER', 'UDP', 'SERVER']
 # copied from requirements.txt
 install_requires=[
   'cryptography>=3.0',
-  'pygame>=2.0.0.dev10',
+  'pygame>=2.0.0',
   'pillow>=7.2.0',
-  'twisted>=20.3.0',
+  'twisted>=21.7.0',
+  'pyOpenSSL>=21.0.0',
+  'service-identity>=21.1.0',
 ]
 
-version = "0.1.1"
+version = "0.2.1"
 url = 'https://github.com/nsetzer/mpgameserver'
 download_url = "%s/archive/%s.tar.gz" % (url, version)
 
