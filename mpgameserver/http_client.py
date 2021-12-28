@@ -4,6 +4,7 @@ import time
 import asyncio
 import threading
 import urllib.request
+import logging
 import ssl
 # import requests
 import json
@@ -89,7 +90,8 @@ def make_request(method, url, payload, query, headers):
     try:
         response = urllib.request.urlopen(req, context=ctx)
     except RemoteDisconnected as e:
-        return ErrorResponse(str(e), 408, {})
+        logging.error("RemoteDisconnected: " + str(e))
+        return ErrorResponse(str(e), 418, {})
     except HTTPError as e:
         # http_error.reason
         body = e.read()
@@ -101,7 +103,8 @@ def make_request(method, url, payload, query, headers):
                 pass
         return ErrorResponse(body, e.code, e.headers)
     except URLError as e:
-        return ErrorResponse(str(e), 408, {})
+        logging.error("URLError: " + str(e))
+        return ErrorResponse(str(e), 418, {})
 
     data = response.read()
 

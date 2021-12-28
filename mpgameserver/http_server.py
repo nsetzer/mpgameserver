@@ -7,14 +7,14 @@ import gzip
 import io
 import threading
 from threading import Thread
-
+from typing import Dict, Tuple, IO
 from collections import defaultdict, OrderedDict
 
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from twisted.web import http
 
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, parse_qs
 import re
 
 from . import crypto
@@ -132,7 +132,7 @@ class SerializableResponse(Response):
 def get(path):
     """decorator which registers a class method as a GET handler"""
     def decorator(f):
-        f._endpoint = path
+        f._route = path
         f._methods = ['GET']
         return f
     return decorator
@@ -141,7 +141,7 @@ def put(path, max_content_length=5*1024*1024):
     """decorator which registers a class method as a PUT handler"""
     def decorator(f):
         f._options = {'max_content_length': max_content_length}
-        f._endpoint = path
+        f._route = path
         f._methods = ['PUT']
         return f
     return decorator
@@ -150,7 +150,7 @@ def post(path, max_content_length=5*1024*1024):
     """decorator which registers a class method as a POST handler"""
     def decorator(f):
         f._options = {'max_content_length': max_content_length}
-        f._endpoint = path
+        f._route = path
         f._methods = ['POST']
         return f
     return decorator
@@ -158,7 +158,7 @@ def post(path, max_content_length=5*1024*1024):
 def delete(path):
     """decorator which registers a class method as a DELETE handler"""
     def decorator(f):
-        f._endpoint = path
+        f._route = path
         f._methods = ['DELETE']
         return f
     return decorator
@@ -333,10 +333,11 @@ class RateLimiter(object):
 
         return count > self.limit
 
-class Endpoint(object):
+class Route(object):
 
-    def __init__(self, method, pattern, callback):
-        super(Endpoint, self).__init__()
+    def __init__(self, name, method, pattern, callback):
+        super(Route, self).__init__()
+        self.name = name
         self.method = method
         self.pattern = pattern
         self.callback = callback
@@ -344,14 +345,18 @@ class Endpoint(object):
         self.ratelimit = None
         self.options = {}
 
+
+    def __repr__(self):
+        return "<Route %s>" % self.name
+
 class Resource(object, metaclass=OrderedClass):
-    """ A Resource is a collection of related endpoints that can be
+    """ A Resource is a collection of related routes that can be
     registered with a Router.
 
     Subclass this class and define methods with the annotations: get, put, post, delete
-    to automatically register endpoints. Each method takes a single argument, the request.
+    to automatically register routes. Each method takes a single argument, the request.
     Then register the resource with a Router. When the server receives an HTTP
-    request the url path will be matched with an endpoint and the corresponding function
+    request the url path will be matched with a route and the corresponding function
     will be called.
 
 
@@ -367,7 +372,7 @@ class Resource(object, metaclass=OrderedClass):
     /:abc*      - match a path component 0 or more times. e.g. '/' or '/one' or '/one/two'
     ```
 
-    When the router is attempting to match a path to a registered endpoint,
+    When the router is attempting to match a path to a registered route,
     the first successful match is used.
 
     Example:
@@ -396,29 +401,81 @@ class Resource(object, metaclass=OrderedClass):
     def __init__(self):
         super(Resource, self).__init__()
 
-        self._endpoints = []
+        self._routes = []
 
         for name in self.member_names:
             if name.startswith("_"):
                 continue
             attr = getattr(self, name)
-            if hasattr(attr, '_endpoint'):
+            if hasattr(attr, '_route'):
                 func = attr
-                # fname = self.__class__.__name__ + "." + func.__name__
-                path = func._endpoint
+                path = func._route
                 methods = func._methods
 
-                endpt = Endpoint(methods[0], path, attr)
+                cls_name = self.__class__.__name__.replace(
+                    "Resource", "").lower()
+                name = cls_name + "." + func.__name__
+                endpt = Route(name, methods[0], path, attr)
                 endpt.ratelimit = getattr(func, '_ratelimit', (1, "second"))
                 endpt.options = getattr(func, '_options', {})
-                self._endpoints.append(endpt)
+                self._routes.append(endpt)
 
-    def endpoints(self):
+    def routes(self):
         """
 
         :returns: a list-of-3-tuples: [(http_method, url_pattern, callback)]
         """
-        return self._endpoints
+        return self._routes
+
+def request_response(router, request):
+
+    result = router.getRoute(request.method, request.path)
+
+    if not result:
+        return JsonResponse({'error': 'path not found'}, 404)
+
+    endpt, matches = result
+    request.matches = matches
+
+    response = None
+
+    # check the put/post options and validate the incoming request.
+    # ensure that the input is not too large
+    max_content_length = endpt.options.get('max_content_length', None)
+    if max_content_length is not None:
+        request_content_length = 0
+
+        if b'Content-Length' not in request.headers:
+            response = JsonResponse({'error': 'Content-Length not specified'}, 411)
+        else:
+            try:
+                request_content_length = int(request.headers[b'Content-Length'][0])
+                if request_content_length < 0:
+                    request_content_length = 0
+            except ValueError as e:
+                request_content_length = 0
+            except Exception as e:
+                request_content_length = 0
+
+        if request_content_length > max_content_length:
+            response = JsonResponse({'error': 'Payload too large'}, 413)
+
+    # if the validations passed, run the user callback
+    if response is None:
+        try:
+            response = endpt.callback(request)
+        except Exception as e:
+            mplogger.exception("user callback failed")
+            response = None
+
+    if response is None:
+        response = JsonResponse({'error':
+            'route failed to return a response'}, 500)
+
+    if not isinstance(response, Response):
+        raise TypeError(type(response))
+
+    return response
 
 class Router(object):
     """
@@ -433,27 +490,29 @@ class Router(object):
             "POST": [],
             "PUT": [],
         }
-        self.endpoints = []
+        self.routes = []
 
         # a rate limiter which limits requests per IP
         # to 100 requests per minute, for up to 1024 clients
         self.limiter = RateLimiter(5, 60*1000, 1024)
 
-    def registerEndpoints(self, endpoints):
-        """ register endpoints with the router
+    def registerRoutes(self, routes):
+        """ register routes with the router
 
 
-        :param endpoints: either a Resource instance,
+        :param routes: either a Resource instance,
             or a list-of-3-tuples: [(http_method, url_pattern, callback)]
         """
 
-        if isinstance(endpoints, Resource):
-            endpoints = endpoints.endpoints()
+        if isinstance(routes, Resource):
+            routes = routes.routes()
 
-        for endpt in endpoints:
-            regex, tokens = self.patternToRegex(endpt.pattern)
-            self.route_table[endpt.method].append((regex, tokens, endpt))
-            self.endpoints.append(endpt)
+        for route in routes:
+            regex, tokens = self.patternToRegex(route.pattern)
+            if route.method not in self.route_table:
+                raise ValueError("Unsupported method: %s" % route.method)
+            self.route_table[route.method].append((regex, tokens, route))
+            self.routes.append(route)
 
     def getRoute(self, method, path):
         """ private method
@@ -469,6 +528,41 @@ class Router(object):
             if m:
                 return endpt, {k: v for k, v in zip(tokens, m.groups())}
         return None
+
+    def patternToTemplate(self, pattern):
+        """ private method
+        convert a url pattern into a regular expression
+
+
+        ```
+        /abc        - match exactly. e.g. '/abc'
+        /:abc       - match a path compenent exactly once. e.g. '/one' or '/two'
+        /:abc?      - match a path component 0 or 1 times. e.g. '/' or '/one'
+        /:abc+      - match a path component 1 or more times. e.g. '/one' or '/one/two'
+        /:abc*      - match a path component 0 or more times. e.g. '/' or '/one' or '/one/two'
+        ```
+
+        """
+
+        parts = [part for part in pattern.split("/") if part]
+        tokens = []
+        template = ""
+        required = 0
+        for part in parts:
+            if part.startswith(':'):
+                if part[-1] in '?*':
+                    tokens.append(part[1: -1])
+                elif part[-1] in '+':
+                    tokens.append(part[1: -1])
+                    required += 1
+                else:
+                    tokens.append(part[1:])
+                    required += 1
+                template += "/{%s}" % tokens[-1]
+            else:
+                template += '/' + part
+
+        return (template, tokens, required)
 
     def patternToRegex(self, pattern):
         """ private method
@@ -488,21 +582,31 @@ class Router(object):
         parts = [part for part in pattern.split("/") if part]
         tokens = []
         re_str = "^"
+        final = False
         for part in parts:
-            if (part.startswith(':')):
+            if part.startswith(':'):
                 c = part[-1]
                 if c == '?':
+                    if final:
+                        raise ValueError(pattern)
                     tokens.append(part[1: -1])
                     re_str += "(?:\\/([^\\/]*)|\\/)?"
+                    final = True
                 elif c == '*':
+                    if final:
+                        raise ValueError(pattern)
                     # match the first forward slash but do not include
                     # match everything after a slash
                     # and store in a capture group
                     tokens.append(part[1: -1])
                     re_str += "(?:\\/(.*)|\\/)?"
+                    final = True
                 elif c == '+':
+                    if final:
+                        raise ValueError(pattern)
                     tokens.append(part[1: -1])
                     re_str += "\\/?(.+)"
+                    final = True
                 else:
                     tokens.append(part[1:])
                     re_str += "\\/([^\\/]+)"
@@ -515,41 +619,155 @@ class Router(object):
         re_str += '$'
         return (re.compile(re_str), tokens)
 
+    def dispatch(self, request):
+
+        response = None
+        if self.limiter.insert(request.client_address[0]):
+            response = JsonResponse({'error': 'Too Many Requests'}, 429)
+        else:
+            response = request_response(self, request)
+
+        # this may mutate the headers
+        payload = response._get_payload(request)
+
+        return response, payload
+
+class TestClient(object):
+    def __init__(self, router):
+        super(TestClient, self).__init__()
+
+        self.router = router
+
+        for route in router.routes:
+            name = route.name.replace(".", "_")
+            fn = lambda *args, _route=route, **kwargs: self._call(_route, args, **kwargs)
+
+            setattr(self, name, fn)
+
+    def _coerce_dict(self, datadict):
+
+        bytesdict = {}
+        if datadict:
+            for name, values in datadict.items():
+
+                if isinstance(name, str):
+                    name = name.encode("utf-8")
+                if not isinstance(name, bytes):
+                    raise TypeError("expected str in header parameter name")
+
+                if values is None:
+                    values = []
+
+                if isinstance(values, (int, str)):
+                    values = [values]
+
+                bytesdict[name] = []
+                for value in values:
+                    if value is not None:
+                        if isinstance(value, int):
+                            value = str(value)
+                        if isinstance(value, str):
+                            value = value.encode("utf-8")
+
+                        if not isinstance(value, bytes):
+                            raise TypeError("expected str in header parameter value")
+                    bytesdict[name].append(value)
+
+        return bytesdict
+
+    def _build_request(self, route, args, params=None, fragment=None, headers=None, body=None):
+        template, tokens, required = self.router.patternToTemplate(route.pattern)
+
+        if len(args) < required:
+            raise ValueError("expected %d positional arguments, found %d" % (
+                len(tokens), len(args)))
+
+        kwargs = {k:"" for k in tokens}
+        kwargs.update({k:v for k,v in zip(tokens, args)})
+
+        path = template.format(**kwargs)
+        # append wild card args
+        if len(args) > len(tokens):
+            path += "".join(["/%s" % s for s in args[len(tokens):]])
+
+        headers = self._coerce_dict(headers)
+
+        req = Request(('127.0.0.1', 54321), route.method, path, params, fragment, headers, body)
+        req.matches = {tok:arg for tok, arg in zip(tokens, args)}
+
+        return req
+
+    def _call(self, route, args, params=None, fragment=None, headers=None, body=None):
+
+        req = self._build_request(route, args, params, fragment, headers, body)
+
+        try:
+            response = request_response(self.router, req)
+        except Exception as e:
+            e.request = req
+            raise
+
+        response._payload = response.payload
+        response.payload = response._get_payload(req)
+
+        # make the original request available to tests
+        response.request = req
+
+        return response
+
+def parse_url(path):
+
+    parsed = urlparse(path)
+
+    query = defaultdict(list)
+    parts = parsed.query.split(b"&")
+    for part in parts:
+        if part:
+            if b'=' in part:
+                name, value = part.split(b"=", 1)
+                name = unquote(name.decode("utf-8"))
+                value = unquote(value.decode("utf-8"))
+            else:
+                name = unquote(part.decode("utf-8"))
+                value = None
+            query[name].append(value)
+
+    return parsed.path, dict(query), parsed.fragment
+
 class Request(object):
     """ A Request contains the information received from a client
 
 
     :attr client_address: the clients IP and port
-    :attr method: a bytes string containing the HTTP method
-    :attr url: the raw request uri
-    :attr location: the path component of the uri
-    :attr stream: a File-like object containig the request content
+    :attr method: a string containing the HTTP method
+    :attr path: a string containing the resource path
+    :attr params: dictionary str=>List[str] of decoded query parameters
+    :attr fragment: a string the request fragment
     :attr headers: a dictionary bytes=>List[bytes] of HTTP headers
+    :attr stream: a File-like object containig the request content
     :attr matches: dictionary of matched path components. See the Resource documentation for more information
-    :attr query: dictionary str=>List[str] of decoded query parameters
     """
 
-    def __init__(self, addr, method, uri, stream, headers):
-        super(Request, self).__init__()
+    def __init__(self, addr: Tuple[str, int], method: str, path: str, params: Dict[str, str], fragment: str, headers: Dict[bytes, bytes], stream: IO[bytes]):
+        """
 
-        parsed = urlparse(unquote(uri))
+        :param addr: A 2-tuple (host: str, port: int)
+        :param method:
+        :param path: the absolute path + query + fragment
+        :param stream: a file like object for reading the request body
+        :param headers:
+
+        """
+        super(Request, self).__init__()
 
         self.client_address = addr
         self.method = method
-        self.url = uri
-        self.location = parsed.path
-        self.stream = stream
+        self.path = path
+        self.params = params
+        self.fragment = fragment
         self.headers = headers
+        self.stream = stream
         self.matches = {}
-
-        self.query = defaultdict(list)
-        parts = parsed.query.split("&")
-        for part in parts:
-            if '=' in part:
-                key, value = part.split("=", 1)
-                self.query[key].append(value)
-            else:
-                self.query[part].append(None)
 
     def json(self):
         """ deserialize the request content as a JSON
@@ -561,6 +779,10 @@ class Request(object):
         """ deserialize the request content as a Serializable instance
         """
         return Serializable.loadb(self.stream.read())
+
+    def __repr__(self):
+
+        return "<Request %s %s>" % (self.method, self.path)
 
 class RequestFactory(http.Request):
     BUFFER_TX_SIZE = 2048
@@ -581,67 +803,18 @@ class RequestFactory(http.Request):
 
         hostport = (addr.host, addr.port)
 
+        path, query, fragment = parse_url(self.uri)
+
         req = Request(
                 hostport,
-                self.method.decode("utf-8"),
-                self.uri.decode("utf-8"),
-                self.content,
-                headers)
+                self.method.decode(),
+                path.decode("utf-8"),
+                query,
+                fragment,
+                headers,
+                self.content)
 
-        response = None
-        if router.limiter.insert(addr.host):
-
-            response = JsonResponse({'error': 'Too Many Requests'}, 429)
-
-        else:
-
-            result = router.getRoute(req.method, req.location)
-
-            if result:
-                endpt, matches = result
-
-                req.matches = matches
-
-                # check the put/post options and validate the incoming request.
-                # ensure that the input is not too large
-                max_content_length = endpt.options.get('max_content_length', None)
-                if max_content_length is not None:
-                    request_content_length = 0
-
-                    if b'Content-Length' not in headers:
-                        response = JsonResponse({'error': 'Content-Length not specified'}, 411)
-                    else:
-                        try:
-                            request_content_length = int(headers[b'Content-Length'][0])
-                            if request_content_length < 0:
-                                request_content_length = 0
-                        except ValueError as e:
-                            request_content_length = 0
-                        except Exception as e:
-                            request_content_length = 0
-
-                    if request_content_length > max_content_length:
-                        response = JsonResponse({'error': 'Payload too large'}, 413)
-
-                # if the validations passed, run the user callback
-                if response is None:
-                    try:
-                        response = endpt.callback(req)
-                    except Exception as e:
-                        mplogger.exception("user callback failed")
-                        response = None
-
-                if response is None:
-                    response = JsonResponse({'error':
-                        'endpoint failed to return a response'}, 500)
-
-                if not isinstance(response, Response):
-                    raise TypeError(type(response))
-            else:
-                response = JsonResponse({'error': 'path not found'}, 404)
-
-        # this may mutate the headers
-        payload = response._get_payload(req)
+        response, payload = router.dispatch(req)
 
         content_length = None
 
@@ -688,7 +861,7 @@ class RequestFactory(http.Request):
                 response.status_code,
                 elapsed,
                 req.method,
-                req.location,
+                req.path,
                 content_length,
                 "z" if response.compress else ""))
 
@@ -745,13 +918,13 @@ class HTTPServer(object):
                 interface=self.addr[0])
             mplogger.info("tcp server listening on %s:%d" % (self.addr))
 
-        for endpt in self.router.endpoints:
-            print("%-7s %s" % (endpt.method, endpt.pattern))
+        for route in self.router.routes:
+            print("%-7s %s" % (route.method, route.pattern))
 
         reactor.run()
 
-    def registerEndpoints(self, endpoints):
-        self.router.registerEndpoints(endpoints)
+    def registerRoutes(self, routes):
+        self.router.registerRoutes(routes)
 
-    def endpoints(self):
-        return self.router.endpoints
+    def routes(self):
+        return self.router.routes

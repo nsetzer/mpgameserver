@@ -693,7 +693,8 @@ class HandshakeServerHelloMessage(Serializable):
 
         signature = kwargs['server_root_key'].sign(payload)
 
-        serialize_value(stream, kwargs['server_root_key'].getPublicKey().getBytes())
+        root_pubkey = kwargs['server_root_key'].getPublicKey().getBytes()
+        serialize_value(stream, root_pubkey)
         serialize_value(stream, payload)
         serialize_value(stream, signature)
 

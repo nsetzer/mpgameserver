@@ -134,7 +134,7 @@ class TwistedServer(DatagramProtocol):
                     interface=self._tcp_addr[0])
                 self.ctxt.log.info("tcp server listening on %s:%d" % (self._tcp_addr))
 
-            for endpt in self._tcp_router.endpoints:
+            for endpt in self._tcp_router.routes:
                 print("%-7s %s" % (endpt.method, endpt.pattern))
 
 
