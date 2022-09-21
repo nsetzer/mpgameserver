@@ -2,24 +2,21 @@
 import pygame
 from .timer import Timer
 
+# TODO: ecdf curve of per-packet latency of the last N packets
+# https://en.wikipedia.org/wiki/Empirical_distribution_function
+
 class LineGraph(object):
-    def __init__(self, rect, samples, title, callback, text_transform):
+    def __init__(self, rect, samples, title, callback, text_transform, font_size=16):
         super(LineGraph, self).__init__()
 
-        self.xpos = rect.x
-        self.ypos = rect.y
+        self.rect = rect
         self.callback = callback
 
         self.timer_update = Timer(.5, self._onUpdateTimeout)
 
         self.lines = []
 
-        self.width = rect.width
-        self.height = rect.height
         self.samples = samples
-
-        self.xscale = self.width//self.samples
-        self.yscale = self.height
 
         self.colors = [(255,0,0), (0,255,0), (0,0,255)]
 
@@ -28,7 +25,7 @@ class LineGraph(object):
         self.vmin = None
         self.vmax = None
 
-        self.font = pygame.font.SysFont('arial', 16)
+        self.font = pygame.font.SysFont('arial', font_size)
 
         self.txt_title = self.font.render(title, True, (255,255,255))
 
@@ -61,19 +58,22 @@ class LineGraph(object):
 
     def paint(self, surface):
 
+        self.xscale = self.rect.width//self.samples
+        self.yscale = self.rect.height
+
         for x in range(0, self.samples + 1, 30):
             c = (72,72,72) if x%60 == 0 else (32,32,32)
-            x0 = self.xpos + x * self.xscale
-            y0 = self.ypos
-            y1 = self.ypos + self.height
+            x0 = self.rect.x + x * self.xscale
+            y0 = self.rect.y
+            y1 = self.rect.y + self.rect.height
             pygame.draw.line(surface, c, (x0, y0), (x0, y1))
         w = self.samples*self.xscale
 
-        pygame.draw.line(surface, (128,128,128), (self.xpos,self.ypos), (self.xpos+w, self.ypos))
-        pygame.draw.line(surface, (128,128,128), (self.xpos,self.ypos+self.height), (self.xpos+w, self.ypos+self.height))
-        pygame.draw.line(surface, (64,64,64), (self.xpos,self.ypos+self.height//2), (self.xpos+w, self.ypos+self.height//2))
-        pygame.draw.line(surface, (32,32,32), (self.xpos,self.ypos+self.height//4), (self.xpos+w, self.ypos+self.height//4))
-        pygame.draw.line(surface, (32,32,32), (self.xpos,self.ypos+self.height*3//4), (self.xpos+w, self.ypos+self.height*3//4))
+        pygame.draw.line(surface, (128,128,128), (self.rect.x,self.rect.y), (self.rect.x+w, self.rect.y))
+        pygame.draw.line(surface, (128,128,128), (self.rect.x,self.rect.y+self.rect.height), (self.rect.x+w, self.rect.y+self.rect.height))
+        pygame.draw.line(surface, (64,64,64), (self.rect.x,self.rect.y+self.rect.height//2), (self.rect.x+w, self.rect.y+self.rect.height//2))
+        pygame.draw.line(surface, (32,32,32), (self.rect.x,self.rect.y+self.rect.height//4), (self.rect.x+w, self.rect.y+self.rect.height//4))
+        pygame.draw.line(surface, (32,32,32), (self.rect.x,self.rect.y+self.rect.height*3//4), (self.rect.x+w, self.rect.y+self.rect.height*3//4))
 
         fh = self.font.get_linesize()
 
@@ -81,13 +81,14 @@ class LineGraph(object):
             if not line:
                 continue
             vmax, points, txt_max, txt_val = line
+            points = [(x+self.rect.x, y) for (x,y) in points]
             pygame.draw.lines(surface, self.colors[idx], False, points, width=2)
 
             if self.show_labels:
-                surface.blit(txt_max, (self.xpos + w + 8, self.ypos + 3*fh*idx))
-                surface.blit(txt_val, (self.xpos + w + 8, self.ypos + 3*fh*idx + fh))
+                surface.blit(txt_max, (self.rect.x + w + 8, self.rect.y + 3*fh*idx))
+                surface.blit(txt_val, (self.rect.x + w + 8, self.rect.y + 3*fh*idx + fh))
 
-        surface.blit(self.txt_title, (self.xpos, self.ypos + self.height - self.txt_title.get_height()))
+        surface.blit(self.txt_title, (self.rect.x, self.rect.y + self.rect.height - self.txt_title.get_height()))
 
     def _construct(self, values, color, dmax):
 
@@ -104,7 +105,7 @@ class LineGraph(object):
         if vrng == 0:
             return
 
-        points = [(i*self.xscale, self.ypos + self.yscale - (self.yscale*(max(min(v,vmax),vmin)-vmin)/vrng)) for i,v in enumerate(values)]
+        points = [(i*self.xscale, self.rect.y + self.yscale - (self.yscale*(max(min(v,vmax),vmin)-vmin)/vrng)) for i,v in enumerate(values)]
 
         txt_max = self.font.render(self.text_transform(tmax), True, color)
         txt_val = self.font.render("(%s)" % self.text_transform(values[-1]), True, color)

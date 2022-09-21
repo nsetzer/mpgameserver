@@ -57,8 +57,14 @@ class ServerContext(object):
         """ private generate a unique token """
         # TODO: should the token be increased to 16 or 32 bytes?
         token, = struct.unpack(">L", os.urandom(4))
+        # enforce thate the token is never a negative 32 bit integer
+        # and that the token always has 30th bit set
+        token &= 0x7fffffff
+        token |= 0x40000000
         while token == 0 or token in self.connections or token in self.temp_connections:
             token, = struct.unpack(">L", os.urandom(4))
+            token &= 0x7fffffff
+            token |= 0x40000000
         return token
 
     def setInterval(self, interval: float):

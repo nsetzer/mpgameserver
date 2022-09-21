@@ -277,8 +277,8 @@ class UdpClient(object):
     def latency(self):
         """ :return: The connection latency
 
-        latency is half of the moving average of round trip time, calculated
-        when a packet is acked.
+        latency is the weighted average time it takes from sending a
+        packet until it is acked.
         """
         if self.conn:
             return self.conn.latency
