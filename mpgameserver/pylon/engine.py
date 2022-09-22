@@ -1074,6 +1074,7 @@ class AdventurePhysics2dComponent(Physics2dComponent):
         super(AdventurePhysics2dComponent, self).__init__(entity, map_rect, collision_group)
 
         self.max_speed = 192
+        self.friction = 0
 
     def update(self, delta_t):
 
@@ -1092,6 +1093,27 @@ class AdventurePhysics2dComponent(Physics2dComponent):
             self.yspeed = self.max_speed
         elif self.yspeed < -self.max_speed:
             self.yspeed = -self.max_speed
+
+        # apply friction to horizontal speed
+
+        if self.xspeed > 1e-3 and self.friction:
+            self.xspeed -= delta_t * self.friction
+            if self.xspeed < 0:
+                self.xspeed = 0
+        elif self.xspeed < -1e-3:
+            self.xspeed += delta_t * self.friction
+            if self.xspeed > 0:
+                self.xspeed = 0
+
+        # apply friction to vertical speed
+        if self.yspeed > 1e-3 and self.friction:
+            self.yspeed -= delta_t * self.friction
+            if self.yspeed < 0:
+                self.yspeed = 0
+        elif self.yspeed < -1e-3:
+            self.yspeed += delta_t * self.friction
+            if self.yspeed > 0:
+                self.yspeed = 0
 
         if abs(delta_t*self.xspeed) < 0.01:
             self.xspeed = 0
