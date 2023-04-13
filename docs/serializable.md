@@ -66,7 +66,7 @@ print(PlayerPosition.loads(encoded_message))
 * [Serializable](#serializable)
 * [SerializableEnum](#serializableenum)
 ---
-## :large_blue_diamond: SerializableType
+## SerializableType
 Classes that derive from Serializable or SerializableEnum are automatically assigned a unique id which is used to serialize/deserialize to/from a byte representation.
 
 This class exposes a method to control what the next unique id will be before a class definition. You shouldn't need to use this under normal operation.
@@ -97,7 +97,7 @@ This class exposes a method to control what the next unique id will be before a 
   
 
 ---
-## :large_blue_diamond: Serializable
+## Serializable
 Base class for defining a new serializable class. Sub Classes of Serializable can be converted to and from byte representations as well as JSON string representations.
 
 
@@ -194,7 +194,7 @@ Base class for defining a new serializable class. Sub Classes of Serializable ca
   
 
 ---
-## :large_blue_diamond: SerializableEnum
+## SerializableEnum
 SerializableEnum is a reimplementation of Python's Enum with support for use in a Serializable.
 
 A SerializableEnum can be used as part of a Generic specifier, for either typing.List or typing.Tuple as well as either a key or value in typing.Dict

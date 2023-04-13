@@ -37,5 +37,3 @@ except ImportError as e:  # pragma: no cover
     # print(e.name)
     # print(e.msg)
     pass
-
-print("init")

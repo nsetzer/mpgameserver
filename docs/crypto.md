@@ -48,7 +48,7 @@ The public api cryptography in MpGameServer provides two classes to help with ma
 * [EllipticCurvePrivateKey](#ellipticcurveprivatekey)
 * [EllipticCurvePublicKey](#ellipticcurvepublickey)
 ---
-## :large_blue_diamond: EllipticCurvePrivateKey
+## EllipticCurvePrivateKey
 A Elliptic Curve Private key used for key exchange and signing
 
 This class implements methods for performing basic Elliptic Curve operations, such as converting between common file formats and signing data.
@@ -88,7 +88,7 @@ This class implements methods for performing basic Elliptic Curve operations, su
   
 
 ---
-## :large_blue_diamond: EllipticCurvePublicKey
+## EllipticCurvePublicKey
 A Elliptic Curve Private key used for key exchange and signing
 
 This class implements methods for performing basic Elliptic Curve operations, such as converting between common file formats and verifying signed data.

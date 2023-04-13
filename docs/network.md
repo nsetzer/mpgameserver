@@ -69,7 +69,7 @@ todo: sequence diagram
 * [ConnectionStatus](#connectionstatus)
 * [RetryMode](#retrymode)
 ---
-## :large_blue_diamond: SeqNum
+## SeqNum
 A sequence number is an integer which wraps around after reaching a maximum value.
 
 A value of zero marks an invalid or uninitialized sequnce number The first sequence number sent by the server will be 1, and after wrapping around the maximum will be set to 1 again.
@@ -112,7 +112,7 @@ Sorting is undefined over a large range
   
 
 ---
-## :large_blue_diamond: BitField
+## BitField
 The bitfield keeps track of recently received messages. It uses a one hot encoding to indicate received SeqNum using a fixed number of bits.
 
 
@@ -144,7 +144,7 @@ The bitfield keeps track of recently received messages. It uses a one hot encodi
   
 
 ---
-## :large_blue_diamond: PacketHeader
+## PacketHeader
 The Packet Header structure is composed of the following:
 
 
@@ -223,7 +223,7 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
   
 
 ---
-## :large_blue_diamond: Packet
+## Packet
 
 
 
@@ -283,7 +283,7 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
   
 
 ---
-## :large_blue_diamond: PendingMessage
+## PendingMessage
 
 
 

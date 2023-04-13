@@ -12,6 +12,7 @@ import pygame
 from pygame._sdl2.video import Window
 
 from ..client import UdpClient
+from ..http_client import HTTPClient
 from ..timer import Timer
 from ..connection import RetryMode
 from ..serializable import Serializable, SerializableEnum
@@ -43,6 +44,9 @@ class Namespace(object):
         self.global_timer = 0
         self.host = "localhost"
         self.port = 1474
+
+        self.use_tls = True
+        self.http_port = 0 # set > 1024 to use
 
 g = Namespace()
 
@@ -85,6 +89,10 @@ class GameScene(object):
         """ called when the window is resized
 
         :param surface:
+        :param scale:
+
+        new_size = (screen.get_width(), screen.get_height())
+
         """
         pass
 
@@ -111,6 +119,8 @@ class ExceptionScene(GameScene):
         self.exec_info = sys.exc_info()
         font = pygame.font.SysFont('arial', 72)
         self.text = font.render("Error", True, (255, 255, 255))
+
+        # TODO: do we need a callback for disconnect event finished?
 
         if g.client and g.client.connected():
             g.client.disconnect()
@@ -190,6 +200,15 @@ class Surface(object):
 
 class Camera(object):
     def __init__(self, surface, entity, map_rect, xmargin=None, ymargin=None):
+        """
+
+        :param surface:
+        :param entity:   the entity to follow (any object with a rect property representing it's location)
+        :param map_rect: the boundary of the map containing the entity
+        :param xmargin:
+        :param ymargin:
+
+        """
         super(Camera, self).__init__()
         self.surface = surface
         self.entity = entity
@@ -282,7 +301,7 @@ class Camera(object):
 
         pygame.draw.line(self.surface, color, (x1,y1), (x2,y2), width)
 
-    def draw_lines(self, color, clsoed, points, width=1):
+    def draw_lines(self, color, closed, points, width=1):
         points = [(x-self.x, y-self.y) for x,y in points]
         pygame.draw.lines(self.surface, color, closed, points, width)
 
@@ -299,7 +318,7 @@ class Camera(object):
 
         pygame.draw.aaline(self.surface, color, (x1,y1), (x2,y2), blend)
 
-    def draw_aalines(self, color, clsoed, points, blend=1):
+    def draw_aalines(self, color, closed, points, blend=1):
         points = [(x-self.x, y-self.y) for x,y in points]
         pygame.draw.aalines(self.surface, color, closed, points, blend)
 
@@ -359,13 +378,19 @@ class Camera(object):
 class Engine(object):
     def __init__(self):
         super(Engine, self).__init__()
+        print("pylon engine construct")
 
         self.active = False
         self.scene = None
         self.screenshot_index = 0
         self.sdl_window = None
 
+
+        self.last_fps_update_time = -1
+        self.stats_fps = [60]*5*60
+
     def init(self, scene=None):
+        print("pylon engine init begin")
 
         pygame.init()
         pygame.font.init()
@@ -385,6 +410,14 @@ class Engine(object):
         self.setWindowMode()
 
         g.client = UdpClient()
+
+        if g.http_port >= 1024:
+            protocol = "https" if g.use_tls else "http"
+            g.http_client = HTTPClient((g.host, g.http_port), protocol=protocol)
+            g.http_client.start()
+        else:
+            g.http_client = None
+
 
     def setScene(self, scene):
         self.scene = scene
@@ -407,7 +440,7 @@ class Engine(object):
             if self.sdl_window:
                 g.window = pygame.display.set_mode((100, 100))
             os.environ['SDL_VIDEO_CENTERED'] = '1'
-            os.environ['SDL_VIDEO_WINDOW_POS']='0, 0'
+            #os.environ['SDL_VIDEO_WINDOW_POS']='0, 0'
             if self.sdl_window:
                 self.sdl_window.position = (0,0)
             g.window = pygame.display.set_mode(self.resolution, pygame.NOFRAME)
@@ -430,7 +463,7 @@ class Engine(object):
                 g.window = pygame.display.set_mode((100, 100))
             x=self.resolution[0]//2 - scale*g.screen_width//2
             y=self.resolution[1]//2 - scale*g.screen_height//2
-            os.environ['SDL_VIDEO_WINDOW_POS']='%d, %d' % (x,y)
+            #os.environ['SDL_VIDEO_WINDOW_POS']='%d, %d' % (x,y)
             if self.sdl_window:
                 self.sdl_window.position = (x, y)
             g.window = pygame.display.set_mode((scale*g.screen_width, scale*g.screen_height))
@@ -455,7 +488,8 @@ class Engine(object):
         if self.sdl_window is None:
             self.sdl_window = Window.from_display_module()
 
-        print("SDL_VIDEO_WINDOW_POS: %s" % os.environ.get('SDL_VIDEO_WINDOW_POS'))
+        print(f"{self.resolution=}")
+        #print("SDL_VIDEO_WINDOW_POS: %s" % os.environ.get('SDL_VIDEO_WINDOW_POS'))
         print("SDL_VIDEO_CENTERED: %s" % os.environ.get('SDL_VIDEO_CENTERED'))
         print(g.window_scale)
 
@@ -489,19 +523,22 @@ class Engine(object):
                 g.window_mode = "windowed_3x"
                 self.setWindowMode()
 
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_ESCAPE:
-                self.setActive(False)
+        #if event.type == pygame.KEYUP:
+            #elif event.key == pygame.K_p:
+            #    imgs = []
+            #    raw = pygame.image.tostring(g.screen, "RGBA", False)
+            #    image = Image.frombytes("RGBA", g.screen.get_size(), raw)
+            #    filename = 'screenshot-%d.png' % self.screenshot_index
+            #    image.save(filename)
+            #    self.screenshot_index += 1
+            #    print("saved " + filename)
 
-            elif event.key == pygame.K_p:
-                imgs = []
-
-                raw = pygame.image.tostring(g.screen, "RGBA", False)
-                image = Image.frombytes("RGBA", g.screen.get_size(), raw)
-                filename = 'screenshot-%d.png' % self.screenshot_index
-                image.save(filename)
-                self.screenshot_index += 1
-                print("saved " + filename)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            event.pos = self.screenpos(event.pos)
+        if event.type == pygame.MOUSEBUTTONUP:
+            event.pos = self.screenpos(event.pos)
+        if event.type == pygame.MOUSEMOTION:
+            event.pos = self.screenpos(event.pos)
 
         self.scene.handle_event(event)
 
@@ -519,6 +556,16 @@ class Engine(object):
         while self.active:
 
             try:
+
+                t0 = int(time.time())
+                if t0 != self.last_fps_update_time:
+                    self.last_fps_update_time = t0
+                    self.stats_fps.append(g.clock.get_fps())
+                    while len(self.stats_fps) > 5 * 60:
+                        self.stats_fps.pop(0)
+
+
+                # TODO: before frame / after frame should be a callback
 
                 if not error:
                     self.beforeFrame()
@@ -538,8 +585,14 @@ class Engine(object):
 
                 # send/recv network data
                 g.client.update()
+
                 for seqnum, msg in g.client.getMessages():
                     self.scene.handle_message(Serializable.loadb(msg))
+
+                # TODO: connect drop event?
+                # if g.client.status() == ConnectionStatus.DROPPED:
+                # call a user defined callback?
+                # or a callback whenever the status changes?
 
                 # update game state
                 # use a constant delta
@@ -566,11 +619,25 @@ class Engine(object):
                 self.setScene(ExceptionScene())
                 error = True
 
+        if g.http_client:
+            g.http_client.stop()
+            g.http_client = None
+            print("http client stopped")
+
         pygame.quit()
 
         if g.client and g.client.connected():
             g.client.disconnect()
             g.client.waitForDisconnect()
+
+    def screenpos(self, windowpos):
+        if g.window is not g.screen:
+            wx, wy = windowpos
+            sx, sy = g.window_size
+            x = int(wx * g.screen_width / sx)
+            y = int(wy * g.screen_height / sy)
+            return (x, y)
+        return windowpos
 
     def beforeFrame(self):
         pass
@@ -610,10 +677,15 @@ class Physics2dComponent(object):
         self.entity = entity
         self.group = collision_group or []
 
+        # entity only moves by whole pixels
+        # at each step the speed is accumulated, and then
+        # the entity is moved by any whole units
         self.xaccum = 0
         self.yaccum = 0
+        # entity moves by speed / FPS pixels ever frame
         self.xspeed = 0
         self.yspeed = 0
+        # speed increases or decreases by accel / FPS every frame
         self.xaccel = 0
         self.yaccel = 0
 
@@ -976,6 +1048,7 @@ class Physics2dComponent(object):
         return state
 
     def setDirection(self, vector):
+        # TODO: what is direction used for, can it be a dynaic property of (xspeed, yspeed)?
         self.direction = vector
 
     def addImpulse(self, dx, dy):
@@ -1206,12 +1279,14 @@ class AnimationComponent(object):
         """ return true if a non looping animation has completed """
         return not self.loop and self.index == len(self.images)
 
-    def setAnimationById(self, aid):
+    def setAnimationById(self, aid, **kwargs):
 
         if self._current_aid != aid:
             if not self.interuptable and not self.finished:
                 return False
             self.setAnimation(**self.registry[aid])
+            for key, val in kwargs.items():
+                setattr(self, key, val)
             self._current_aid = aid
             return True
         return False
@@ -1319,7 +1394,7 @@ class Entity(object):
             rect = pygame.Rect(0,0,0,0)
 
         self.rect = rect
-        self.collision_mask = None
+        self.collision_mask = None # TODO: does this need an x/y offset?
 
         # ECS properties
         self.layer=0
@@ -1944,6 +2019,8 @@ class EntityStore(object):
     SOLID="idx_solid"
     UPDATE="idx_update"
     DESTROY="idx_destroy"
+    # TO be defined by users:
+    NPC="idx_npc"
 
     def __init__(self):
         super(EntityStore, self).__init__()

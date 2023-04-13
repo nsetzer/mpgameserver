@@ -133,7 +133,7 @@ class MainState(GameState):
         self.graph_bytes = self.widgets[-1]
 
         size = 150
-        y = self.widgets[0].ypos - size - 24
+        y = self.widgets[0].rect.y - size - 24
         rect = pygame.Rect(0, y, g.screen_width, size)
         self.widgets.append(AreaGraph(rect, 5*60,
             lambda: g.server.server.thread.perf_data))
@@ -258,12 +258,12 @@ class MainState(GameState):
         for wgt in self.widgets:
             wgt.paint(g.screen)
 
-        y = self.graph_pkts.ypos
+        y = self.graph_pkts.rect.y
         g.screen.blit(self.max_pkts_mask, (4, y+4))
         g.screen.blit(self.max_pkts_sent, (4, y+4))
         g.screen.blit(self.max_pkts_recv, (4, y+4+self.font.get_linesize()))
 
-        y = self.graph_bytes.ypos
+        y = self.graph_bytes.rect.y
         g.screen.blit(self.max_bytes_mask, (4, y+4))
         g.screen.blit(self.max_bytes_sent, (4, y+4))
         g.screen.blit(self.max_bytes_recv, (4, y+4+self.font.get_linesize()))

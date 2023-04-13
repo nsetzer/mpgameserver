@@ -283,3 +283,8 @@ class HTTPClient(object):
     def stop(self):
         self.client.stop()
 
+    def update(self):
+        # TODO: this is questionable?
+
+        for resp in self.getResponses():
+            pass

@@ -25,6 +25,7 @@ The network protocol is based on the work of [Glenn Fiedler's Gaffer On Games](h
     * [Cryptography](docs/crypto.md)
     * [Serialization](docs/serializable.md)
     * [Event Dispatch](docs/event_dispatch.md)
+    * [Pygame Engine](docs/engine.md)
     * [Misc.](docs/misc.md)
     * [Experimental](docs/experimental.md)
 

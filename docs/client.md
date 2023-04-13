@@ -11,7 +11,7 @@
 * [ConnectionStatus](#connectionstatus)
 * [RetryMode](#retrymode)
 ---
-## :large_blue_diamond: UdpClient
+## UdpClient
 This class manages UDP socket connection to the server.
 
 The Client is designed to be non-blocking so that it can be run inside the main loop of the game. The update() function should be called once per frame to perform the actual send and receive of messages. Messages can be queued at any time using send()
@@ -75,7 +75,7 @@ The server public key is a Elliptic Curve public key that should be generated on
 
   
 
-* :small_blue_diamond: **`latency`**`(self)` - latency is half of the moving average of round trip time, calculated when a packet is acked.
+* :small_blue_diamond: **`latency`**`(self)` - latency is the weighted average time it takes from sending a packet until it is acked.
 
   * **:leftwards_arrow_with_hook: `returns:`** The connection latency
 
@@ -149,7 +149,7 @@ The server public key is a Elliptic Curve public key that should be generated on
   
 
 ---
-## :large_blue_diamond: ConnectionStats
+## ConnectionStats
 Structure containing all of the connection statistics.
 
 The attributes for packets sent/recv, bytes sent/recv and latency are sequence types where each bin is the statistics for a particular second. The list is treated as a FIFO queue, meaning lower indexes are older samples. The last index is the most recent data.

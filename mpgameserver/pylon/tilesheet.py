@@ -126,6 +126,9 @@ class TileSheetBuilder(object):
 
                 images.append(image)
 
+        self.nrows = rows
+        self.ncols = cols
+
         #print("elapsed: %.2f" % (time.time() - t0))
 
         return images

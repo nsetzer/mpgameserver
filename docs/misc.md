@@ -7,7 +7,7 @@
 * [LineGraph](#linegraph)
 * [AreaGraph](#areagraph)
 ---
-## :large_blue_diamond: Timer
+## Timer
 
 
 
@@ -31,13 +31,13 @@
 
   * **:arrow_forward: `delta_t:`** 
 ---
-## :large_blue_diamond: LineGraph
+## LineGraph
 
 
 
 #### Constructor:
 
-* :small_blue_diamond: **`LineGraph`**`(self, rect, samples, title, callback, text_transform)` - 
+* :small_blue_diamond: **`LineGraph`**`(self, rect, samples, title, callback, text_transform, font_size=16)` - 
 
   * **:arrow_forward: `rect:`** 
 
@@ -48,6 +48,8 @@
   * **:arrow_forward: `callback:`** 
 
   * **:arrow_forward: `text_transform:`** 
+
+  * **:arrow_forward: `font_size:`** 
 
 #### Methods:
 
@@ -75,7 +77,7 @@
 
   * **:arrow_forward: `delta_t:`** 
 ---
-## :large_blue_diamond: AreaGraph
+## AreaGraph
 
 
 

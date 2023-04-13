@@ -6,7 +6,7 @@
  The Event Dispatch API is a collection of classes designed to work with the serialization library. It allows for message dispatch based on the type of the message. It can be used in both the server or client.
  
 ---
-## :large_blue_diamond: ServerMessageDispatcher
+## ServerMessageDispatcher
 An Event Dispatcher for server events
 
 server events are messages with an associate client and seqnum.
@@ -63,7 +63,7 @@ register functions to process events with this class. When an event is received 
   
 
 ---
-## :large_blue_diamond: ClientMessageDispatcher
+## ClientMessageDispatcher
 An Event Dispatcher for server events
 
 client events are messages with an associate seqnum.

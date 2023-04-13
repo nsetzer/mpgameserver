@@ -8,7 +8,7 @@ The classes documented here are experimental and may have breaking API changes i
 
 
 ---
-## :large_blue_diamond: TaskPool
+## TaskPool
 A Task Pool provides a thread safe mechanism for running long lived operations inside a separate process to avoid blocking the main game loop.
 
 The event handler can submit a task at any time. When the task completes the task pool update will process the callbacks.
@@ -48,7 +48,7 @@ The event handler events Update and Shutdown should call the appropriate task po
   
 
 ---
-## :large_blue_diamond: Captcha
+## Captcha
 Note: the default settings for both create() and getBytes() are tuned to produce an image which will fit inside of a single UDP packet, and allow for some overhead
 
 
@@ -105,7 +105,7 @@ Note: the default settings for both create() and getBytes() are tuned to produce
   
 
 ---
-## :large_blue_diamond: Auth
+## Auth
 Password hashing and verification
 
 Note: Both hashing and verifying passwords are expensive operations, taking around .1 to .2 seconds. The server event handler should use a TaskPool to run the authentication in a background process and handle the result asynchronously.

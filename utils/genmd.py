@@ -229,9 +229,11 @@ def genmd_cls(stream, cls, name=None, cls_vars=None):
     """
     stream.write("---\n")
     if name:
-        stream.write("## :large_blue_diamond: %s\n" % name)
+        # stream.write("## :large_blue_diamond: %s\n" % name)
+        stream.write("## %s\n" % name)
     else:
-        stream.write("## :large_blue_diamond: %s\n" % cls.__name__)
+        #stream.write("## :large_blue_diamond: %s\n" % cls.__name__)
+        stream.write("## %s\n" % cls.__name__)
     summary, attrs, _, body = parse_doc(cls.__doc__, 'attr')
 
     stream.write("%s\n\n" % summary)
@@ -587,6 +589,84 @@ def md_experimental():
         for cls, name in classes:
             genmd_cls(wf, cls, name)
 
+def md_engine():
+
+    doc = """
+    # Pygame Engine
+
+    """.replace("\n    ", "")
+
+
+
+
+
+    engine_intro = """
+        ## Pygame Engine
+    """.replace("\n    ", "")
+
+    engine = [
+        (mpgameserver.pylon.GameScene, None),
+        (mpgameserver.pylon.Engine, None),
+    ]
+
+    input_intro = """
+        ## Network Synchronized Objects
+
+
+    """.replace("\n    ", "")
+
+    user_input = [
+        (mpgameserver.pylon.KeyboardInputDevice, None),
+        (mpgameserver.pylon.JoystickInputDevice, None),
+        (mpgameserver.pylon.NetworkPlayerState, None),
+        (mpgameserver.pylon.InputController, None),
+        (mpgameserver.pylon.RemoteInputController, None),
+    ]
+
+    entity_intro = """
+        ## User Input
+
+
+    """.replace("\n    ", "")
+
+    components = [
+        (mpgameserver.pylon.Entity, None),
+        (mpgameserver.pylon.Physics2dComponent, None),
+        (mpgameserver.pylon.PlatformPhysics2dComponent, None),
+        (mpgameserver.pylon.AdventurePhysics2dComponent, None),
+        (mpgameserver.pylon.AnimationComponent, None),
+    ]
+
+    with open("docs/engine.md", "w") as wf:
+        wf.write("[Home](../README.md)\n")
+
+        genmd_index(wf, engine + user_input + components)
+
+        wf.write("\n")
+        wf.write(doc)
+        wf.write("\n")
+
+        wf.write("\n")
+        wf.write(engine_intro)
+        wf.write("\n")
+
+        for cls, name in engine:
+            genmd_cls(wf, cls, name)
+
+        wf.write("\n")
+        wf.write(input_intro)
+        wf.write("\n")
+
+        for cls, name in user_input:
+            genmd_cls(wf, cls, name)
+
+        wf.write("\n")
+        wf.write(entity_intro)
+        wf.write("\n")
+
+        for cls, name in components:
+            genmd_cls(wf, cls, name)
+
 def main():
 
     md_server()
@@ -598,6 +678,7 @@ def main():
     md_event_dispatch()
     md_experimental()
     md_http()
+    md_engine()
 
 if __name__ == '__main__':
     main()
