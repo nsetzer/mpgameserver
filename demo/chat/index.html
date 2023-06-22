@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,height=device-height,maximum-scale=1, user-scalable=0">
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<html lang="en">
+<head>
+<script type="text/javascript" src="./static/index.js"></script>
+<style>
+
+body {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 1em;
+}
+
+.vbox {
+    display:flex;
+    flex: 1;
+    flex-direction: column;
+    box-sizing: border-box;
+
+    width: calc(100% - 2em);
+    border: 2px solid black;
+    border-radius: 8px;
+    padding: .5em;
+
+}
+
+.vpad {
+    width: 1px;
+    height: 100px;
+}
+
+.chat {
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 2em);
+    border: 2px solid black;
+    border-radius: 8px;
+    padding: .5em;
+    margin-bottom: 1em;
+}
+
+.chat input {
+    box-sizing: border-box;
+    width: 100%;
+}
+/*TODO: handle text overflow*/
+.system_user_name {
+    color: red;
+    text-align: right;
+}
+
+.system_user_message {
+    text-align: right;
+}
+
+.remote_user_name {
+    color: blue;
+    text-align: left;
+}
+
+.remote_user_message {
+    text-align: left;
+}
+
+.local_user_name {
+    color: green;
+    text-align: right;
+}
+
+.local_user_message {
+    text-align: right;
+}
+
+.remote_user_name {
+    color: blue;
+    text-align: left;
+}
+
+.remote_user_message {
+    text-align: left;
+}
+
+
+</style>
+</head>
+<body>
+    <div id="root">Enable Javascript to render site.</div>
+    <div id="vbox" class="vbox"></div>
+    <div class="vpad"></div>
+    <div class="chat">
+    <input id="chatbox" type="text"></input>
+    </div>
+</body>
+
+<script type="text/javascript">
+
+const root = document.getElementById("root")
+while (root.hasChildNodes()) {
+    root.removeChild(root.lastChild);
+}
+
+main();
+
+</script>
+</html>

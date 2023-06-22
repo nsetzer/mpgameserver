@@ -6,6 +6,11 @@ import time
 import gzip
 import io
 import threading
+import base64
+import hashlib
+import struct
+from enum import Enum
+
 from threading import Thread
 from typing import Dict, Tuple, IO
 from collections import defaultdict, OrderedDict
@@ -58,6 +63,7 @@ class Response(object):
         self.headers = {} if headers is None else headers
         self.payload = b"" if payload is None else payload
         self.compress = compress
+        self.upgrade = False # true if the response is an upgrade to websockets
 
         if isinstance(self.payload, str):
             self.payload = self.payload.encode("utf-8")
@@ -115,6 +121,12 @@ class JsonResponse(Response):
         self.headers['Content-Length'] = str(len(encoded))
         return encoded
 
+class WebsocketUpgradeResponse(Response):
+    def __init__(self, endpt, headers):
+        super(WebsocketUpgradeResponse, self).__init__(b"", 101, headers)
+        self.upgrade = True
+        self.endpt = endpt
+
 class SerializableResponse(Response):
     def __init__(self, obj, status_code=200, headers=None):
         super(SerializableResponse, self).__init__(obj, status_code, headers)
@@ -128,6 +140,278 @@ class SerializableResponse(Response):
         self.headers['Content-Type'] = "application/x-serializable"
         self.headers['Content-Length'] = str(len(encoded))
         return encoded
+
+# https://tools.ietf.org/id/draft-ietf-hybi-thewebsocketprotocol-09.html#rfc.section.4.7
+
+class WebSocketOpCodes(Enum):
+    Open = 0xFF # non standard
+    Close = 0x8
+    Ping = 0x9
+    Pong = 0xA
+    Text = 0x1  # utf-8
+    Binary = 0x2
+
+class WebSocketFrame(object):
+    def __init__(self):
+        super(WebSocketFrame, self).__init__()
+
+        self.flags = lambda: None
+        self.flags.fin    = 0
+        self.flags.rsv1   = 0
+        self.flags.rsv2   = 0
+        self.flags.rsv3   = 0
+        self.flags.opcode = 0
+        self.flags.mask   = 0
+        self.flags.length = 0
+        self.payload_length = 0
+        self.masking_key = b"\x00\x00\x00\x00"
+        self.payload = b""
+
+    def parseHeader(self, hdr):
+        flags, length = struct.unpack("!BB", hdr)
+
+        self.flags.fin    = (flags & 0x80) >> 7
+        self.flags.rsv1   = (flags & 0x40) >> 6
+        self.flags.rsv2   = (flags & 0x20) >> 5
+        self.flags.rsv3   = (flags & 0x10) >> 4
+        self.flags.opcode = WebSocketOpCodes((flags & 0x0F) >> 0)
+        self.flags.mask   = 1 if (length & 0x80) else 0
+        self.flags.length = length & 0x7F
+
+    def readHeader(self, socket):
+
+        hdr = socket.recv(2)
+        if not hdr:
+            raise ValueError()
+        if hdr:
+            self.parseHeader(hdr)
+            return True
+        return False
+
+    def readDataHeader(self, socket):
+
+        length = self.flags.length
+
+        if length == 126:
+            length, = struct.unpack("!H", socket.recv(2))
+        if length == 127:
+            length, = struct.unpack("!Q", socket.recv(8))
+
+        self.payload_length = length
+
+        if self.flags.mask:
+            self.masking_key = socket.recv(4)
+
+    def readData(self, socket):
+
+        self.payload = bytearray(socket.recv(self.payload_length))
+
+        if self.flags.mask:
+            for i in range(len(self.payload)):
+                self.payload[i] ^= self.masking_key[i%4];
+
+    def serializeHeader(self):
+
+        flags = ((self.flags.fin) << 7) | \
+                ((self.flags.rsv1) << 6) | \
+                ((self.flags.rsv2) << 5) | \
+                ((self.flags.rsv3) << 4) | \
+                ((self.flags.opcode.value) << 0)
+
+        if self.payload_length <= 125:
+            length = self.payload_length
+        elif self.payload_length <= 0xFFFF:
+            length = 126
+        else:
+            length = 127
+
+        length |= self.flags.mask << 7
+
+        return struct.pack("BB", flags, length)
+
+    def writeHeader(self, socket):
+
+        hdr = self.serializeHeader()
+        socket.sendall(hdr)
+
+    def serializeDataHeader(self):
+        hdr = []
+
+        if self.payload_length > 125:
+            if self.payload_length < 0XFFFF:
+                hdr.append(struct.pack("!H", self.payload_length))
+            else:
+                hdr.append(struct.pack("!Q", self.payload_length))
+
+        if self.flags.mask:
+            hdr.append(self.masking_key)
+
+        return b"".join(hdr)
+
+    def writeDataHeader(self, socket):
+
+        hdr = self.serializeDataHeader()
+        if hdr:
+            socket.sendall(hdr)
+
+    def writeData(self, socket):
+
+        socket.sendall(self.payload)
+
+    def __repr__(self):
+        opcode = self.flags.opcode.name
+        return f"WebSocketFrame({opcode}){{{self.payload}}}"
+
+    @staticmethod
+    def Ping(message=b'hello'):
+        frame = WebSocketFrame()
+        frame.flags.fin = 1
+        frame.flags.opcode = WebSocketOpCodes.Ping
+        frame.payload = message
+        frame.payload_length = len(frame.payload)
+        return frame
+
+    @staticmethod
+    def Pong(message=b'hello'):
+        frame = WebSocketFrame()
+        frame.flags.fin = 1
+        frame.flags.opcode = WebSocketOpCodes.Pong
+        frame.payload = message
+        frame.payload_length = len(frame.payload)
+        return frame
+
+    @staticmethod
+    def Close(status=200, message=b'OK'):
+        frame = WebSocketFrame()
+        frame.flags.fin = 1
+        frame.flags.opcode = WebSocketOpCodes.Close
+        frame.payload = struct.pack("!H", status) + message
+        frame.payload_length = len(frame.payload)
+        return frame
+
+    @staticmethod
+    def Text(message=''):
+        frame = WebSocketFrame()
+        frame.flags.fin = 1
+        frame.flags.opcode = WebSocketOpCodes.Text
+        frame.payload = message.encode("utf-8")
+        frame.payload_length = len(frame.payload)
+        return frame
+
+    @staticmethod
+    def Binary(message=b''):
+        frame = WebSocketFrame()
+        frame.flags.fin = 1
+        frame.flags.opcode = WebSocketOpCodes.Binary
+        frame.payload = message
+        frame.payload_length = len(frame.payload)
+        return frame
+
+def readFrameFactory(socket):
+
+    def readFrame():
+
+        frame = WebSocketFrame()
+        frame.readHeader(socket)
+        frame.readDataHeader(socket)
+        frame.readData(socket)
+
+        return frame
+
+    return readFrame
+
+def writeFrameFactory(socket):
+
+    def writeFrame(frame):
+
+        frame.writeHeader(socket)
+        frame.writeDataHeader(socket)
+        frame.writeData(socket)
+
+        return b""
+
+    return writeFrame
+
+class WebSocketTemporaryRingBuffer(object):
+    """ this is a sample ring buffer designed to figure out the api
+        replace with a better implementation
+    """
+    def __init__(self, request):
+        super(WebSocketTemporaryRingBuffer, self).__init__()
+        self.request = request
+        self.buf = b""
+
+    def _push(self, data):
+        self.buf += data
+
+    def recv(self, n):
+        data = self.buf[:n]
+        self.buf = self.buf[n:]
+        return data
+
+    def sendall(self, data):
+        self.request.chunked = 0
+        self.request.write(data)
+
+class WebSocketTemporaryHandler(object):
+    """ this is a simple handler designed to figure out the api
+        replace with a better implementation
+
+        the handler has all of the state context for
+        websocket connect and disconnect events
+    """
+    next_uid = 1
+
+    def __init__(self, hostport, query, headers, buffer, endpt):
+
+        self._buffer = buffer
+        self._endpt = endpt
+        self.closed = False
+
+        self.hostport = hostport
+        self.query = query
+        self.headers = headers
+
+        self.uid = WebSocketTemporaryHandler.next_uid
+        WebSocketTemporaryHandler.next_uid += 1
+
+        self._readFrame = readFrameFactory(self._buffer)
+        self._writeFrame = writeFrameFactory(self._buffer)
+
+    def send(self, message):
+
+        if isinstance(message, str):
+            frame = WebSocketFrame.Text(message)
+        else:
+            raise TypeError(type(message))
+
+        self._writeFrame(frame)
+
+    def open(self):
+        self._endpt.callback(self, WebSocketOpCodes.Open, None)
+
+    def close(self):
+        if not self.closed:
+            frame = WebSocketFrame.Close()
+            self._writeFrame(frame)
+        self.closed = True
+
+    def __call__(self, data):
+        self._buffer._push(data)
+
+        frame = self._readFrame()
+
+        if not frame.flags.mask:
+            raise Exception("client mask bit not set")
+
+        if frame.flags.opcode == WebSocketOpCodes.Text:
+            frame.payload = frame.payload.decode("utf-8")
+
+        # TODO: catch and close?
+        self._endpt.callback(self, frame.flags.opcode, frame.payload)
+
+        if frame.flags.opcode == WebSocketOpCodes.Close:
+            self.close()
 
 def get(path):
     """decorator which registers a class method as a GET handler"""
@@ -160,6 +444,14 @@ def delete(path):
     def decorator(f):
         f._route = path
         f._methods = ['DELETE']
+        return f
+    return decorator
+
+def websocket(path):
+    def decorator(f):
+        f._route = path
+        f._methods = ['GET']
+        f._websocket = True
         return f
     return decorator
 
@@ -335,12 +627,13 @@ class RateLimiter(object):
 
 class Route(object):
 
-    def __init__(self, name, method, pattern, callback):
+    def __init__(self, name, method, pattern, callback, websocket=False):
         super(Route, self).__init__()
         self.name = name
         self.method = method
         self.pattern = pattern
         self.callback = callback
+        self.websocket = websocket
 
         self.ratelimit = None
         self.options = {}
@@ -411,11 +704,12 @@ class Resource(object, metaclass=OrderedClass):
                 func = attr
                 path = func._route
                 methods = func._methods
+                isws = getattr(func, '_websocket', False)
 
                 cls_name = self.__class__.__name__.replace(
                     "Resource", "").lower()
                 name = cls_name + "." + func.__name__
-                endpt = Route(name, methods[0], path, attr)
+                endpt = Route(name, methods[0], path, attr, websocket=isws)
                 endpt.ratelimit = getattr(func, '_ratelimit', (1, "second"))
                 endpt.options = getattr(func, '_options', {})
                 self._routes.append(endpt)
@@ -427,15 +721,53 @@ class Resource(object, metaclass=OrderedClass):
         """
         return self._routes
 
-def request_response(router, request):
+def upgrade_websocket(endpt, request):
 
-    result = router.getRoute(request.method, request.path)
+    headers = {
+        "Upgrade": "websocket",
+        "Connection": "Upgrade",
+    }
 
-    if not result:
-        return JsonResponse({'error': 'path not found'}, 404)
+    if b'Upgrade' not in request.headers:
+        return JsonResponse({'error': 'upgrade header missing'}, 400)
 
-    endpt, matches = result
-    request.matches = matches
+    if b'Sec-WebSocket-Key' not in request.headers:
+        return JsonResponse({'error': 'websocket key missing'}, 400)
+
+    upgrade = request.headers.get(b'Upgrade')
+    if upgrade:
+        if upgrade[0] != b"websocket":
+            return JsonResponse({'error': 'invalid upgrade header'}, 400)
+
+    key = request.headers.get(b'Sec-WebSocket-Key')
+    if key:
+        guid = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        secret = key[0] + guid
+        digest = hashlib.sha1(secret).digest()
+        value = base64.b64encode(digest).decode()
+        headers['Sec-WebSocket-Accept'] = value
+
+    # TODO: handle protocol correctly
+    ws_protocol = request.headers.get(b'Sec-WebSocket-Protocol')
+    if ws_protocol:
+        protocol = ws_protocol[0].split(b",")[0].decode()
+        headers['Sec-WebSocket-Protocol'] = protocol
+
+    ws_version = request.headers.get(b'Sec-WebSocket-Version')
+    if ws_protocol and ws_version[0] != b'13':
+        logging.warning("unexpected web socket version %s", ws_version)
+
+    # TODO: SEC-WEBSOCKET-EXTENSIONS : support for deflate
+
+    # other headers:
+    # b'SEC-FETCH-DEST' [b'websocket']
+    # b'SEC-FETCH-MODE' [b'websocket']
+    # b'SEC-FETCH-SITE' [b'same-origin']
+    print("upgrade", headers)
+
+    return WebsocketUpgradeResponse(endpt, headers)
+
+def request_response(endpt, request):
 
     response = None
 
@@ -625,12 +957,21 @@ class Router(object):
         if self.limiter.insert(request.client_address[0]):
             response = JsonResponse({'error': 'Too Many Requests'}, 429)
         else:
-            response = request_response(self, request)
 
-        # this may mutate the headers
-        payload = response._get_payload(request)
+            result = self.getRoute(request.method, request.path)
 
-        return response, payload
+            if not result:
+                response = JsonResponse({'error': 'path not found'}, 404)
+            else:
+
+                endpt, matches = result
+                request.matches = matches
+                if endpt.websocket:
+                    response = upgrade_websocket(endpt, request)
+                else:
+                    response = request_response(endpt, request)
+
+        return response
 
 class TestClient(object):
     def __init__(self, router):
@@ -702,7 +1043,18 @@ class TestClient(object):
         req = self._build_request(route, args, params, fragment, headers, body)
 
         try:
-            response = request_response(self.router, req)
+            result = router.getRoute(request.method, request.path)
+
+            if not result:
+                response = JsonResponse({'error': 'path not found'}, 404)
+
+            else:
+                endpt, matches = result
+                request.matches = matches
+                if endpt.websocket:
+                    response = JsonResponse({'error': 'websocket not supported in testing'}, 500)
+                else:
+                    response = request_response(endpt, req)
         except Exception as e:
             e.request = req
             raise
@@ -814,21 +1166,17 @@ class RequestFactory(http.Request):
                 headers,
                 self.content)
 
-        response, payload = router.dispatch(req)
+        response = router.dispatch(req)
 
         content_length = None
+
+        # this may mutate the headers
+        payload = response._get_payload(req)
 
         try:
 
             self.setResponseCode(response.status_code)
-
-            for k, v in response.headers.items():
-                if k.lower() == "content-length":
-                    content_length = v
-                if not isinstance(v, str):
-                    mplogger.warning("header value is not a string. %s=%s", k, v)
-                    v = str(v)
-                self.setHeader(k, v)
+            self.sendResponseHeaders(response.headers)
 
             if hasattr(payload, "read"):
                 content_length = 0
@@ -848,6 +1196,8 @@ class RequestFactory(http.Request):
             sys.stderr.write("%s aborted\n" % url.path)
         except BrokenPipeError as e:
             sys.stderr.write("%s aborted\n" % url.path)
+        except Exception as e: # TODO: remove this error handler after testing ws
+            logging.error("handled error", e)
         finally:
             if hasattr(payload, "close"):
                 payload.close()
@@ -865,7 +1215,29 @@ class RequestFactory(http.Request):
                 content_length,
                 "z" if response.compress else ""))
 
-            self.finish()
+            if not response.upgrade:
+                self.finish()
+            else:
+                print("ws set raw mode")
+                self.channel.setRawMode()
+                buffer = WebSocketTemporaryRingBuffer(self)
+                handler = WebSocketTemporaryHandler(hostport, query, headers, buffer, response.endpt)
+                self.channel.websocket_callback = handler
+                try:
+                    handler.open()
+                except Exception as e:
+                    mplogger.exception("failed to install websocket")
+
+
+
+    def sendResponseHeaders(self, headers):
+        for k, v in headers.items():
+            if k.lower() == "content-length":
+                content_length = v
+            if not isinstance(v, str):
+                mplogger.warning("header value is not a string. %s=%s", k, v)
+                v = str(v)
+            self.setHeader(k, v)
 
 class HTTPFactory(http.HTTPFactory):
 
@@ -875,6 +1247,33 @@ class HTTPFactory(http.HTTPFactory):
         class Channel(http.HTTPChannel):
             requestFactory = RequestFactory
             requestRouter = router
+            websocket_callback = None
+
+            def dataReceived(self, data):
+                if self.websocket_callback:
+                    self.websocket_callback(data)
+                else:
+                    super().dataReceived(data)
+                return
+
+            def requestDone(self, request):
+                print("on requestDone")
+                self.websocket_callback = None
+                super().requestDone(request)
+
+            def connectionLost(self, reason):
+                uid = -1
+                closed = None
+                if self.websocket_callback:
+                    uid = self.websocket_callback.uid
+                    closed = self.websocket_callback.closed
+                print("on connectionLost", uid, closed, reason)
+                self.websocket_callback = None
+                super().connectionLost(reason)
+
+            def loseConnection(self):
+                print("on loseConnection")
+                super().loseConnection()
 
         self._channel = Channel
 
