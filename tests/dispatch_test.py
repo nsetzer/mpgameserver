@@ -1,4 +1,6 @@
 
+from __future__ import annotations
+
 import unittest
 from mpgameserver import Serializable, SeqNum, \
     ServerMessageDispatcher, ClientMessageDispatcher, \

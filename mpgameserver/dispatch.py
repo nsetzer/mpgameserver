@@ -140,7 +140,10 @@ class MessageDispatcher(object):
 
         Normally you will not need to call this method directly
         """
+        if isinstance(event_type, type):
+            event_type = event_type.__name__
         self.registered_events[event_type] = fn
+
 
     def unregister_function(self, event_type):
         """
@@ -148,6 +151,8 @@ class MessageDispatcher(object):
 
         Normally you will not need to call this method directly
         """
+        if isinstance(event_type, type):
+            event_type = event_type.__name__
         del self.registered_events[event_type]
 
     def dispatch(self):
@@ -178,9 +183,9 @@ class ServerMessageDispatcher(MessageDispatcher):
         """
 
         T = type(msg)
-        if T not in self.registered_events:
+        if T.__name__ not in self.registered_events:
             raise DispatchError(T.__name__)
-        self.registered_events[T](client, seqnum, msg)
+        self.registered_events[T.__name__](client, seqnum, msg)
 
 class ClientMessageDispatcher(MessageDispatcher):
     """ An Event Dispatcher for server events
@@ -203,7 +208,7 @@ class ClientMessageDispatcher(MessageDispatcher):
         :param msg: the message received from the server
         """
         T = type(msg)
-        if T not in self.registered_events:
+        if T.__name__ not in self.registered_events:
             raise DispatchError(T.__name__)
-        self.registered_events[T](seqnum, msg)
+        self.registered_events[T.__name__](seqnum, msg)
 
