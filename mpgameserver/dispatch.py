@@ -45,7 +45,7 @@ def server_event(method):
 
     """
 
-    sig = inspect.signature(method)
+    sig = inspect.signature(method, eval_str=True)
     args = list(sig.parameters.items())
 
     if len(args) != 4:
@@ -96,7 +96,7 @@ def client_event(method):
 
     """
 
-    sig = inspect.signature(method)
+    sig = inspect.signature(method, eval_str=True)
     args = list(sig.parameters.items())
 
     if len(args) != 3:
