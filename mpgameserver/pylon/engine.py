@@ -1948,8 +1948,6 @@ class RemoteInputController(object):
                 t1 = state.clock
                 p = (clock - t0) / (t1 - t0)
 
-                x1 = self.entity.rect.x
-
                 self.entity.update(delta_t)
                 current_state = self.entity.getState()
                 state = self.entity.interpolateState(current_state, state.state, p)

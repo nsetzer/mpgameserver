@@ -1220,6 +1220,7 @@ class RequestFactory(http.Request):
             else:
                 print("ws set raw mode")
                 self.channel.setRawMode()
+                self.transport.setTcpNoDelay(True)
                 buffer = WebSocketTemporaryRingBuffer(self)
                 handler = WebSocketTemporaryHandler(hostport, query, headers, buffer, response.endpt)
                 self.channel.websocket_callback = handler
@@ -1257,7 +1258,7 @@ class HTTPFactory(http.HTTPFactory):
                 return
 
             def requestDone(self, request):
-                print("on requestDone")
+                #print("on requestDone")
                 self.websocket_callback = None
                 super().requestDone(request)
 
@@ -1267,12 +1268,12 @@ class HTTPFactory(http.HTTPFactory):
                 if self.websocket_callback:
                     uid = self.websocket_callback.uid
                     closed = self.websocket_callback.closed
-                print("on connectionLost", uid, closed, reason)
+                #print("on connectionLost", uid, closed, reason)
                 self.websocket_callback = None
                 super().connectionLost(reason)
 
             def loseConnection(self):
-                print("on loseConnection")
+                #print("on loseConnection")
                 super().loseConnection()
 
         self._channel = Channel

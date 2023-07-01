@@ -20,7 +20,11 @@ from mpgameserver.http_server import path_join_safe, \
 from mpgameserver.http_client import HTTPClient
 from mpgameserver.dispatch import ServerMessageDispatcher, ClientMessageDispatcher, \
     server_event, client_event
-from mpgameserver import pylon
+
+try:
+    from mpgameserver import pylon
+except ImportError as e: # pragma: no cover
+    pass
 
 # pygame is an optional dependency
 try:
