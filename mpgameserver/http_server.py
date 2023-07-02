@@ -23,7 +23,7 @@ from urllib.parse import urlparse, unquote, parse_qs
 import re
 
 from . import crypto
-from .serializable import Serializable
+from .serializable import Serializable, SerializableEnum
 
 
 from .logger import mplogger
@@ -143,7 +143,17 @@ class SerializableResponse(Response):
 
 # https://tools.ietf.org/id/draft-ietf-hybi-thewebsocketprotocol-09.html#rfc.section.4.7
 
-class WebSocketOpCodes(Enum):
+class WebSocketOpCode(SerializableEnum):
+    """ opcodes indicating the kind of message sent or received over a websocket connection
+
+    :attr Open: Non-Standard opcode indicating the connection was successfully opened
+    :attr Close: Opcode indicating the connection was closed
+    :attr Ping: Opcode sent by the server expecting a Pong response from the client
+    :attr Pong: Opcode sent by the client after receiving a Ping
+    :attr Text: Message Payload is Text data
+    :attr Binary: Message Payload is binary data
+    """
+
     Open = 0xFF # non standard
     Close = 0x8
     Ping = 0x9
@@ -174,7 +184,7 @@ class WebSocketFrame(object):
         self.flags.rsv1   = (flags & 0x40) >> 6
         self.flags.rsv2   = (flags & 0x20) >> 5
         self.flags.rsv3   = (flags & 0x10) >> 4
-        self.flags.opcode = WebSocketOpCodes((flags & 0x0F) >> 0)
+        self.flags.opcode = WebSocketOpCode((flags & 0x0F) >> 0)
         self.flags.mask   = 1 if (length & 0x80) else 0
         self.flags.length = length & 0x7F
 
@@ -266,7 +276,7 @@ class WebSocketFrame(object):
     def Ping(message=b'hello'):
         frame = WebSocketFrame()
         frame.flags.fin = 1
-        frame.flags.opcode = WebSocketOpCodes.Ping
+        frame.flags.opcode = WebSocketOpCode.Ping
         frame.payload = message
         frame.payload_length = len(frame.payload)
         return frame
@@ -275,7 +285,7 @@ class WebSocketFrame(object):
     def Pong(message=b'hello'):
         frame = WebSocketFrame()
         frame.flags.fin = 1
-        frame.flags.opcode = WebSocketOpCodes.Pong
+        frame.flags.opcode = WebSocketOpCode.Pong
         frame.payload = message
         frame.payload_length = len(frame.payload)
         return frame
@@ -284,7 +294,7 @@ class WebSocketFrame(object):
     def Close(status=200, message=b'OK'):
         frame = WebSocketFrame()
         frame.flags.fin = 1
-        frame.flags.opcode = WebSocketOpCodes.Close
+        frame.flags.opcode = WebSocketOpCode.Close
         frame.payload = struct.pack("!H", status) + message
         frame.payload_length = len(frame.payload)
         return frame
@@ -293,7 +303,7 @@ class WebSocketFrame(object):
     def Text(message=''):
         frame = WebSocketFrame()
         frame.flags.fin = 1
-        frame.flags.opcode = WebSocketOpCodes.Text
+        frame.flags.opcode = WebSocketOpCode.Text
         frame.payload = message.encode("utf-8")
         frame.payload_length = len(frame.payload)
         return frame
@@ -302,7 +312,7 @@ class WebSocketFrame(object):
     def Binary(message=b''):
         frame = WebSocketFrame()
         frame.flags.fin = 1
-        frame.flags.opcode = WebSocketOpCodes.Binary
+        frame.flags.opcode = WebSocketOpCode.Binary
         frame.payload = message
         frame.payload_length = len(frame.payload)
         return frame
@@ -388,7 +398,7 @@ class WebSocketTemporaryHandler(object):
         self._writeFrame(frame)
 
     def open(self):
-        self._endpt.callback(self, WebSocketOpCodes.Open, None)
+        self._endpt.callback(self, WebSocketOpCode.Open, None)
 
     def close(self):
         if not self.closed:
@@ -404,17 +414,24 @@ class WebSocketTemporaryHandler(object):
         if not frame.flags.mask:
             raise Exception("client mask bit not set")
 
-        if frame.flags.opcode == WebSocketOpCodes.Text:
+        if frame.flags.opcode == WebSocketOpCode.Text:
             frame.payload = frame.payload.decode("utf-8")
 
         # TODO: catch and close?
         self._endpt.callback(self, frame.flags.opcode, frame.payload)
 
-        if frame.flags.opcode == WebSocketOpCodes.Close:
+        if frame.flags.opcode == WebSocketOpCode.Close:
             self.close()
 
 def get(path):
-    """decorator which registers a class method as a GET handler"""
+    """decorator which registers a class method as a GET handler
+
+    The decorated function should have the signature:
+
+    ```
+    def myhandler(self, request: Request)
+    ```
+    """
     def decorator(f):
         f._route = path
         f._methods = ['GET']
@@ -422,7 +439,14 @@ def get(path):
     return decorator
 
 def put(path, max_content_length=5*1024*1024):
-    """decorator which registers a class method as a PUT handler"""
+    """decorator which registers a class method as a PUT handler
+
+    The decorated function should have the signature:
+
+    ```
+    def myhandler(self, request: Request)
+    ```
+    """
     def decorator(f):
         f._options = {'max_content_length': max_content_length}
         f._route = path
@@ -431,7 +455,14 @@ def put(path, max_content_length=5*1024*1024):
     return decorator
 
 def post(path, max_content_length=5*1024*1024):
-    """decorator which registers a class method as a POST handler"""
+    """decorator which registers a class method as a POST handler
+
+    The decorated function should have the signature:
+
+    ```
+    def myhandler(self, request: Request)
+    ```
+    """
     def decorator(f):
         f._options = {'max_content_length': max_content_length}
         f._route = path
@@ -440,7 +471,14 @@ def post(path, max_content_length=5*1024*1024):
     return decorator
 
 def delete(path):
-    """decorator which registers a class method as a DELETE handler"""
+    """decorator which registers a class method as a DELETE handler
+
+    The decorated function should have the signature:
+
+    ```
+    def myhandler(self, request: Request)
+    ```
+    """
     def decorator(f):
         f._route = path
         f._methods = ['DELETE']
@@ -448,6 +486,15 @@ def delete(path):
     return decorator
 
 def websocket(path):
+    """
+    decorator which registers a class method as a websocket handler
+
+    The decorated function should have the signature:
+
+    ```
+    def mysocket(self, request: Request, opcode: WebSocketOpCode, payload: str|bytes)
+    ```
+    """
     def decorator(f):
         f._route = path
         f._methods = ['GET']
@@ -456,6 +503,8 @@ def websocket(path):
     return decorator
 
 def header(header):
+
+    """decorator for documenting expected headers"""
     def decorator(f):
         if not hasattr(f, '_header'):
             f._header = []
@@ -464,6 +513,7 @@ def header(header):
     return decorator
 
 def param(param):
+    """decorator for documenting expected query parameters"""
     def decorator(f):
         if not hasattr(f, '_param'):
             f._param = []
@@ -668,6 +718,13 @@ class Resource(object, metaclass=OrderedClass):
     When the router is attempting to match a path to a registered route,
     the first successful match is used.
 
+    Websockets are handled as a special case to a normal request.
+    The websocket connection lifecycle is handled by the framework.
+    The registered function will be called when the socket is successfully opened
+    and again when it is closed, with an empty payload. The function will also
+    be called each time a user message is received. Check the opcode to determine
+    if the payload is text or binary.
+
     Example:
 
     ```
@@ -685,6 +742,13 @@ class Resource(object, metaclass=OrderedClass):
         def delete_user(self, request):
             pass
 
+        @put("/file/:name"):
+        def put_file(self, request):
+            pass
+
+        @websocket("/ws"):
+        def websocket(self, request, opcode, payload):
+            pass
 
     ```
 
@@ -1033,17 +1097,17 @@ class TestClient(object):
 
         headers = self._coerce_dict(headers)
 
-        req = Request(('127.0.0.1', 54321), route.method, path, params, fragment, headers, body)
-        req.matches = {tok:arg for tok, arg in zip(tokens, args)}
+        request = Request(('127.0.0.1', 54321), route.method, path, params, fragment, headers, body)
+        request.matches = {tok:arg for tok, arg in zip(tokens, args)}
 
-        return req
+        return request
 
     def _call(self, route, args, params=None, fragment=None, headers=None, body=None):
 
-        req = self._build_request(route, args, params, fragment, headers, body)
+        request = self._build_request(route, args, params, fragment, headers, body)
 
         try:
-            result = router.getRoute(request.method, request.path)
+            result = self.router.getRoute(request.method, request.path)
 
             if not result:
                 response = JsonResponse({'error': 'path not found'}, 404)
@@ -1054,16 +1118,16 @@ class TestClient(object):
                 if endpt.websocket:
                     response = JsonResponse({'error': 'websocket not supported in testing'}, 500)
                 else:
-                    response = request_response(endpt, req)
+                    response = request_response(endpt, request)
         except Exception as e:
-            e.request = req
+            e.request = request
             raise
 
         response._payload = response.payload
-        response.payload = response._get_payload(req)
+        response.payload = response._get_payload(request)
 
         # make the original request available to tests
-        response.request = req
+        response.request = request
 
         return response
 

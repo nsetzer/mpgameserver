@@ -15,7 +15,7 @@ import json
 from mpgameserver import Serializable, HTTPServer, Router, Resource, \
     get, post, \
     HTTPClient, Response, JsonResponse, \
-    websocket, WebSocketOpCodes
+    websocket, WebSocketOpCode
 
 class SampleResource(Resource):
 
@@ -35,7 +35,7 @@ class SampleResource(Resource):
     @websocket("/ws")
     def socket(self, request, opcode, payload):
 
-        if opcode == WebSocketOpCodes.Open:
+        if opcode == WebSocketOpCode.Open:
             print("socket open")
 
             username = "user-%s" % request.uid
@@ -52,7 +52,7 @@ class SampleResource(Resource):
                 }))
             self.connections[request.uid] = request
 
-        elif opcode == WebSocketOpCodes.Close:
+        elif opcode == WebSocketOpCode.Close:
 
             username = "user-%s" % request.uid
             del self.connections[request.uid]

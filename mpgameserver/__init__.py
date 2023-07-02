@@ -16,7 +16,7 @@ from mpgameserver.http_server import path_join_safe, \
     get, put, delete, post, websocket, \
     Router, Resource, HTTPServer, \
     Response, JsonResponse, SerializableResponse, \
-    WebSocketOpCodes
+    WebSocketOpCode
 from mpgameserver.http_client import HTTPClient
 from mpgameserver.dispatch import ServerMessageDispatcher, ClientMessageDispatcher, \
     server_event, client_event

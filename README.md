@@ -21,7 +21,7 @@ The network protocol is based on the work of [Glenn Fiedler's Gaffer On Games](h
 * API Documentation
     * [Client](docs/client.md)
     * [Server](docs/server.md)
-    * [HTTP/TCP](docs/http.md)
+    * [HTTP/TCP/WebSockets](docs/http.md)
     * [Cryptography](docs/crypto.md)
     * [Serialization](docs/serializable.md)
     * [Event Dispatch](docs/event_dispatch.md)
@@ -87,6 +87,9 @@ should take care to structure sending messages to avoid hitting this limit.
 Note that 32 datagrams per second is a transfer rate of about 45KB per second.
 
 ## Road map
+* Client Side Prediction (CSP) / Server Side Prediction (SSP)
+  * A half baked solution is almost ready to be merged.
+* Entity Component System
 * Connection throttling based on latency
 * Use X509 certificates for server authentication. The current EC key solution is somewhat hacky.
 * Ability to send multiple packets per tick/frame.

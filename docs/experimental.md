@@ -1,6 +1,5 @@
 [Home](../README.md)
 * [TaskPool](#taskpool)
-* [Captcha](#captcha)
 * [Auth](#auth)
 
 # Experimental Modules
@@ -44,63 +43,6 @@ The event handler events Update and Shutdown should call the appropriate task po
   
 
 * :small_blue_diamond: **`update`**`(self)` - check for completed tasks and process the callbacks.
-
-  
-
----
-## Captcha
-Note: the default settings for both create() and getBytes() are tuned to produce an image which will fit inside of a single UDP packet, and allow for some overhead
-
-
-
-
-#### Constructor:
-
-* :small_blue_diamond: **`Captcha`**`(self, code, image)` - 
-
-  * **:arrow_forward: `code:`** 
-
-  * **:arrow_forward: `image:`** 
-
-#### Public Attributes:
-
-**`code`**: the string contained in the image
-
-**`image`**: the image challenge
-
-
-#### Static Methods:
-
-* :small_blue_diamond: **`create`**`(font_file=None, code_length=5, bgc=(255, 255, 255), size=(100, 25), rotate=60)` - 
-
-  * **:arrow_forward: `font_file:`** 
-
-  * **:arrow_forward: `code_length:`** 
-
-  * **:arrow_forward: `bgc:`** the background color of the image
-
-  * **:arrow_forward: `size:`** a 2-tuple (width, height) in pixels
-
-  * **:arrow_forward: `rotate:`** maximum degrees to rotate a single character. a character will be rotated by a random value +/- rotate/2
-
-  
-
-
-#### Methods:
-
-* :small_blue_diamond: **`getBytes`**`(self, quality=25)` - 
-
-  * **:arrow_forward: `quality:`** 0 to 100, default 25. use 75 for 'best quality' see the PIL documentation for more information
-
-  
-
-* :small_blue_diamond: **`validate`**`(self, text)` - compare a given string to the code
-
-  * **:arrow_forward: `text:`** 
-
-  Performs a constant time comparison that is case insensitive.
-
-  returns true when the given text matches the code
 
   
 

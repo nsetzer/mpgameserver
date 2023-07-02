@@ -503,9 +503,18 @@ def md_http():
         (mpgameserver.http_server.HTTPServer, None),
         (mpgameserver.http_client.HTTPClient, None),
     ]
-    enums=[]
+    enums = [
+        (mpgameserver.http_server.WebSocketOpCode, None),
+    ]
     functions = [
         (mpgameserver.http_server.path_join_safe, None),
+        (mpgameserver.http_server.get, None),
+        (mpgameserver.http_server.put, None),
+        (mpgameserver.http_server.post, None),
+        (mpgameserver.http_server.delete, None),
+        (mpgameserver.http_server.websocket, None),
+        (mpgameserver.http_server.header, None),
+        (mpgameserver.http_server.param, None),
     ]
     with open("docs/http.md", "w") as wf:
         wf.write("[Home](../README.md)\n\n")
@@ -517,6 +526,9 @@ def md_http():
 
         for cls, name in classes:
             genmd_cls(wf, cls, name)
+
+        for cls, name in enums:
+            genmd_enum(wf, cls, name)
 
         wf.write("\n## :cherry_blossom: Functions:\n\n")
         for fn, name in functions:
@@ -577,7 +589,7 @@ def md_experimental():
 
     classes = [
         (mpgameserver.task.TaskPool, None),
-        (mpgameserver.captcha.Captcha, None),
+        #(mpgameserver.captcha.Captcha, None),
         (mpgameserver.auth.Auth, None),
     ]
     with open("docs/experimental.md", "w") as wf:
