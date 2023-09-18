@@ -8,6 +8,7 @@ you can focus on building an event driven game server.
 
 The network protocol is based on the work of [Glenn Fiedler's Gaffer On Games](https://www.gafferongames.com)
 
+* [Installation](#installation)
 * [Features](#features)
 * [Performance](#performance)
 * [Security](#security)
@@ -30,6 +31,14 @@ The network protocol is based on the work of [Glenn Fiedler's Gaffer On Games](h
     * [Experimental](docs/experimental.md)
 
 ![Client](docs/client.png)
+
+## Installation
+
+MpGameServer has an optional installation of pygame.
+
+```bash
+pip install mpgameserver[pygame]
+```
 
 ## Features
 
