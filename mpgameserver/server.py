@@ -41,16 +41,22 @@ from .logger import LOGLEVEL_TRACE
 from .timer import Timer
 from .logger import mplogger
 
-def sleep(duration):
+def sleep(duration,eps1=0.001,eps2=0.0005):
+    """
+    sleep for a duration, in seconds.
 
-    if duration < 0.001:
+    if the total duration is less than eps1, return without sleeping
+    sleep for small intervals in an attempt to wake up prior to the deadline
+    """
+
+    if duration < eps1:
         return
 
     start = time.perf_counter()
     slept_for = 0
 
-    while duration - slept_for > 0.0005:
-        time.sleep(min((duration - slept_for)*.5, 0.0005))
+    while duration - slept_for > eps2:
+        time.sleep(min((duration - slept_for)*.5, eps2))
         slept_for =  time.perf_counter() - start
 
 class UdpServerThread(Thread):
@@ -67,13 +73,26 @@ class UdpServerThread(Thread):
     """
     def __init__(self, sock, ctxt):
         super(UdpServerThread, self).__init__()
+        # setting daemon true allows python to exit without
+        # gracefully stopping this thread
         self.daemon = True
 
         self.sock = sock
         self.ctxt = ctxt
+
+        # thread safe queue for passing messages from the udp receive thread
+        # to this thread
         self.queue = []
         self.lk_queue = Lock()
         self.cv_queue = Condition(self.lk_queue)
+
+        # maintain a queue containing 5 seconds worth of data
+        # the duration spent per frame at various stages
+        # 0 : total elapsed time
+        # 1 : message handler
+        # 2 : update
+        # 3 : network send
+        # 4 : idle time
 
         self.perf = [0,0,0,0,0]
         self.perf_data = [[1,0,0,0,1] for i in range(5 * 60)]
