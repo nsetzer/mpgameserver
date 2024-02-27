@@ -112,7 +112,7 @@ class UdpClient(object):
         """
         :return: True if the client is connected to the server
         """
-        return self.conn and self.conn.status == ConnectionStatus.CONNECTED
+        return bool(self.conn and self.conn.status == ConnectionStatus.CONNECTED)
 
     def status(self) -> ConnectionStatus:
         """
