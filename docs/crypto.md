@@ -58,32 +58,32 @@ This class implements methods for performing basic Elliptic Curve operations, su
 
 #### Constructor:
 
-* :small_blue_diamond: **`EllipticCurvePrivateKey`**`(self, key=None)` - 
+ **EllipticCurvePrivateKey**`(self, key=None)` - 
 
-  * **:arrow_forward: `key:`** 
+  * **key:** 
 
 #### Static Methods:
 
-* :small_blue_diamond: **`fromBytes`**`(der: bytes)` - 
+ **fromBytes**`(der: bytes)` - 
 
-  * **:arrow_forward: `der:`** 
-* :small_blue_diamond: **`fromPEM`**`(pem: str)` - 
+  * **der:** 
+ **fromPEM**`(pem: str)` - 
 
-  * **:arrow_forward: `pem:`** 
-* :small_blue_diamond: **`new`**`()` - 
+  * **pem:** 
+ **new**`()` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`curve`**`(self)` - 
-* :small_blue_diamond: **`getBytes`**`(self)` - 
-* :small_blue_diamond: **`getPrivateKeyPEM`**`(self)` - 
-* :small_blue_diamond: **`getPublicKey`**`(self)` - 
-* :small_blue_diamond: **`savePEM`**`(self, path)` - 
+ **curve**`(self)` - 
+ **getBytes**`(self)` - 
+ **getPrivateKeyPEM**`(self)` - 
+ **getPublicKey**`(self)` - 
+ **savePEM**`(self, path)` - 
 
-  * **:arrow_forward: `path:`** 
-* :small_blue_diamond: **`sign`**`(self, data)` - returns a signature for the supplied data
+  * **path:** 
+ **sign**`(self, data)` - returns a signature for the supplied data
 
-  * **:arrow_forward: `data:`** 
+  * **data:** 
 
   
 
@@ -98,9 +98,9 @@ This class implements methods for performing basic Elliptic Curve operations, su
 
 #### Constructor:
 
-* :small_blue_diamond: **`EllipticCurvePublicKey`**`(self, key)` - 
+ **EllipticCurvePublicKey**`(self, key)` - 
 
-  * **:arrow_forward: `key:`** 
+  * **key:** 
 
 #### Public Attributes:
 
@@ -109,43 +109,43 @@ This class implements methods for performing basic Elliptic Curve operations, su
 
 #### Static Methods:
 
-* :small_blue_diamond: **`fromBytes`**`(der: bytes)` - 
+ **fromBytes**`(der: bytes)` - 
 
-  * **:arrow_forward: `der:`** 
-* :small_blue_diamond: **`fromPEM`**`(pem: str)` - 
+  * **der:** 
+ **fromPEM**`(pem: str)` - 
 
-  * **:arrow_forward: `pem:`** 
-* :small_blue_diamond: **`uncompress`**`(curve: cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve, data: bytes)` - load a compressed elliptic curve
+  * **pem:** 
+ **uncompress**`(curve: cryptography.hazmat.primitives.asymmetric.ec.EllipticCurve, data: bytes)` - load a compressed elliptic curve
 
-  * **:arrow_forward: `curve:`** 
+  * **curve:** 
 
-  * **:arrow_forward: `data:`** 
+  * **data:** 
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`compress`**`(self) -> bytes` - compress elliptic curve public key as defined in ANSI X9.62 section 4.3.6
+ **compress**`(self) -> bytes` - compress elliptic curve public key as defined in ANSI X9.62 section 4.3.6
 
   
 
-* :small_blue_diamond: **`curve`**`(self)` - 
-* :small_blue_diamond: **`getBytes`**`(self)` - 
-* :small_blue_diamond: **`getEncryptionKey`**`(self)` - 
-* :small_blue_diamond: **`getPublicKeyPEM`**`(self)` - 
-* :small_blue_diamond: **`savePEM`**`(path)` - 
+ **curve**`(self)` - 
+ **getBytes**`(self)` - 
+ **getEncryptionKey**`(self)` - 
+ **getPublicKeyPEM**`(self)` - 
+ **savePEM**`(path)` - 
 
-  * **:arrow_forward: `path:`** 
-* :small_blue_diamond: **`verify`**`(self, signature, data)` - validate that the supplied data matches a signature
+  * **path:** 
+ **verify**`(self, signature, data)` - validate that the supplied data matches a signature
 
-  * **:arrow_forward: `signature:`** 
+  * **signature:** 
 
-  * **:arrow_forward: `data:`** 
+  * **data:** 
 
   raises an InvalidSignature exception on error
 
   
 
-* :small_blue_diamond: **`x`**`(self) -> bytes` - 
-* :small_blue_diamond: **`y`**`(self) -> bytes` - 
+ **x**`(self) -> bytes` - 
+ **y**`(self) -> bytes` - 

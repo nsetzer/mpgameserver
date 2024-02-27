@@ -19,30 +19,30 @@ The event handler events Update and Shutdown should call the appropriate task po
 
 #### Constructor:
 
-* :small_blue_diamond: **`TaskPool`**`(self, processes=1, maxtasksperchild=None)` - 
+ **TaskPool**`(self, processes=1, maxtasksperchild=None)` - 
 
-  * **:arrow_forward: `processes:`** 
+  * **processes:** 
 
-  * **:arrow_forward: `maxtasksperchild:`** 
+  * **maxtasksperchild:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`shutdown`**`(self)` - cancel running tasks and stop the task pool
-* :small_blue_diamond: **`submit`**`(self, fn, args=(), kwargs={}, callback=None, error_callback=None)` - submit a task to be run in a background process
+ **shutdown**`(self)` - cancel running tasks and stop the task pool
+ **submit**`(self, fn, args=(), kwargs={}, callback=None, error_callback=None)` - submit a task to be run in a background process
 
-  * **:arrow_forward: `fn:`** a function to be run in a background process
+  * **fn:** a function to be run in a background process
 
-  * **:arrow_forward: `args:`** the positional arguments to fn, if any
+  * **args:** the positional arguments to fn, if any
 
-  * **:arrow_forward: `kwargs:`** the keyword arguments to fn, if any
+  * **kwargs:** the keyword arguments to fn, if any
 
-  * **:arrow_forward: `callback:`** a callback function which accepts a single argument, the return value from fn. The callback is called if the function exits without an exception.
+  * **callback:** a callback function which accepts a single argument, the return value from fn. The callback is called if the function exits without an exception.
 
-  * **:arrow_forward: `error_callback:`** a callback function which accepts a single argument, the exception value from fn. The callback is called if the function exits because of an unhandled exception.
+  * **error_callback:** a callback function which accepts a single argument, the exception value from fn. The callback is called if the function exits because of an unhandled exception.
 
   
 
-* :small_blue_diamond: **`update`**`(self)` - check for completed tasks and process the callbacks.
+ **update**`(self)` - check for completed tasks and process the callbacks.
 
   
 
@@ -66,11 +66,11 @@ Note: this does not encrypt the password. Theoretically, it is not possible to r
 
 #### Static Methods:
 
-* :small_blue_diamond: **`hash_password`**`(password: bytes) -> str` - hash a password
+ **hash_password**`(password: bytes) -> str` - hash a password
 
-  * **:arrow_forward: `password:`** the user supplied password encoded as bytes
+  * **password:** the user supplied password encoded as bytes
 
-  * **:leftwards_arrow_with_hook: `returns:`** the hashed password
+  * **returns:** the hashed password
 
   The output string contains the parameters used to define the hash, as well as the randomly generated salt used.
 
@@ -78,11 +78,11 @@ Note: this does not encrypt the password. Theoretically, it is not possible to r
 
   
 
-* :small_blue_diamond: **`verify_password`**`(password: bytes, password_hash: str) -> bool` - verify a given password matches the given password hash
+ **verify_password**`(password: bytes, password_hash: str) -> bool` - verify a given password matches the given password hash
 
-  * **:arrow_forward: `password:`** the user supplied password encoded as bytes
+  * **password:** the user supplied password encoded as bytes
 
-  * **:arrow_forward: `password_hash:`** a hash previously determined using hash_password()
+  * **password_hash:** a hash previously determined using hash_password()
 
   raises TypeError, ValueError if the input is not well formed
 

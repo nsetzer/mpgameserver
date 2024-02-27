@@ -35,9 +35,9 @@ The EventHandler events are guaranted to always be run from the same thread.
 
 #### Methods:
 
-* :small_blue_diamond: **`connect`**`(self, client)` - client connection event
+ **connect**`(self, client)` - client connection event
 
-  * **:arrow_forward: `client:`** the client instance that connected
+  * **client:** the client instance that connected
 
   This event is called when a client successfully completes the handshake
 
@@ -45,27 +45,27 @@ The EventHandler events are guaranted to always be run from the same thread.
 
   
 
-* :small_blue_diamond: **`disconnect`**`(self, client)` - client disconnect event
+ **disconnect**`(self, client)` - client disconnect event
 
-  * **:arrow_forward: `client:`** the client instance that disconnected
+  * **client:** the client instance that disconnected
 
   This event is called when a client disconnects or timeouts
 
   
 
-* :small_blue_diamond: **`handle_message`**`(self, client, seqnum, msg: bytes = b'')` - receive client message event
+ **handle_message**`(self, client, seqnum, msg: bytes = b'')` - receive client message event
 
-  * **:arrow_forward: `client:`** the client that sent the message
+  * **client:** the client that sent the message
 
-  * **:arrow_forward: `seqnum:`** 
+  * **seqnum:** 
 
-  * **:arrow_forward: `msg:`** the message
+  * **msg:** the message
 
   This event is called whenever a message is received from a remote client. If a datagram contained multiple messages, then this event will be called once for each message.
 
   
 
-* :small_blue_diamond: **`shutdown`**`(self)` - server shutdown event
+ **shutdown**`(self)` - server shutdown event
 
   This event is called when the server is shutting down gracefully. It is the last event that will be called before the process exits
 
@@ -73,15 +73,15 @@ The EventHandler events are guaranted to always be run from the same thread.
 
   
 
-* :small_blue_diamond: **`starting`**`(self)` - server starting event
+ **starting**`(self)` - server starting event
 
   This event is called when the server first starts
 
   
 
-* :small_blue_diamond: **`update`**`(self, delta_t: float)` - server tick event
+ **update**`(self, delta_t: float)` - server tick event
 
-  * **:arrow_forward: `delta_t:`** elapsed time in seconds since the last update
+  * **delta_t:** elapsed time in seconds since the last update
 
   This event is called once per server tick
 
@@ -109,25 +109,25 @@ Many of the events in EventHandler receive a client. That client implements the 
 
 #### Methods:
 
-* :small_blue_diamond: **`disconnect`**`(self)` - force the server to drop the connection
+ **disconnect**`(self)` - force the server to drop the connection
 
   
 
-* :small_blue_diamond: **`send`**`(self, payload: bytes, retry: mpgameserver.connection.RetryMode = RetryMode.NONE, callback: Callable[[bool], NoneType] = None)` - send a message to the remote client/server
+ **send**`(self, payload: bytes, retry: mpgameserver.connection.RetryMode = RetryMode.NONE, callback: Callable[[bool], NoneType] = None)` - send a message to the remote client/server
 
-  * **:arrow_forward: `payload:`** 
+  * **payload:** 
 
-  * **:arrow_forward: `retry:`** the RetryMode, default to RetryMode.NONE
+  * **retry:** the RetryMode, default to RetryMode.NONE
 
-  * **:arrow_forward: `callback:`** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise.
+  * **callback:** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise.
 
   
 
-* :small_blue_diamond: **`send_guaranteed`**`(self, payload: bytes, callback: Callable[[bool], NoneType] = None)` - send the message and guarantee delivery by using RetryMode.RETRY_ON_TIMEOUT
+ **send_guaranteed**`(self, payload: bytes, callback: Callable[[bool], NoneType] = None)` - send the message and guarantee delivery by using RetryMode.RETRY_ON_TIMEOUT
 
-  * **:arrow_forward: `payload:`** 
+  * **payload:** 
 
-  * **:arrow_forward: `callback:`** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise.
+  * **callback:** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise.
 
   
 
@@ -142,62 +142,62 @@ This class is not thread safe. the configuration should be set prior to calling 
 
 #### Constructor:
 
-* :small_blue_diamond: **`ServerContext`**`(self, handler, root_key=None)` - 
+ **ServerContext**`(self, handler, root_key=None)` - 
 
-  * **:arrow_forward: `handler:`** an instance of an EventHandler
+  * **handler:** an instance of an EventHandler
 
-  * **:arrow_forward: `root_key:`** an EllipticCurvePrivateKey used for signing messages. The client will use the public key to to verify the signature. If not given a new key is generated automatically. Note: It is strongly encouraged to provide your own private key, and to pre-share the corresponding public key with the client. Doing so can avoid a man-in-the-middle attack.
+  * **root_key:** an EllipticCurvePrivateKey used for signing messages. The client will use the public key to to verify the signature. If not given a new key is generated automatically. Note: It is strongly encouraged to provide your own private key, and to pre-share the corresponding public key with the client. Doing so can avoid a man-in-the-middle attack.
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`enableAccessLogs`**`(self, path)` - configure an alternative file path for logging IP addresses that connect to the server
+ **enableAccessLogs**`(self, path)` - configure an alternative file path for logging IP addresses that connect to the server
 
-  * **:arrow_forward: `path:`** a file path or None to disable access logging
+  * **path:** a file path or None to disable access logging
 
   
 
-* :small_blue_diamond: **`setBlockList`**`(self, blocklist: Set[str])` - set IP addresses to block.
+ **setBlockList**`(self, blocklist: Set[str])` - set IP addresses to block.
 
-  * **:arrow_forward: `blocklist:`** a set of IP addresses to block
+  * **blocklist:** a set of IP addresses to block
 
   blocked IP addresses will have any datagrams received dropped before processing
 
   
 
-* :small_blue_diamond: **`setConnectionTimeout`**`(self, timeout)` - configure the timeout for closing a connection if no message is received after a period of time.
+ **setConnectionTimeout**`(self, timeout)` - configure the timeout for closing a connection if no message is received after a period of time.
 
-  * **:arrow_forward: `timeout:`** the timeout in seconds. The default is 5 seconds.
-
-  
-
-* :small_blue_diamond: **`setInterval`**`(self, interval: float)` - configure the server tick rate (server frame rate)
-
-  * **:arrow_forward: `interval:`** the seconds per server tick
+  * **timeout:** the timeout in seconds. The default is 5 seconds.
 
   
 
-* :small_blue_diamond: **`setKeepAliveInterval`**`(self, interval)` - configure the timeout for sending keep alive datagrams to clients.
+ **setInterval**`(self, interval: float)` - configure the server tick rate (server frame rate)
 
-  * **:arrow_forward: `interval:`** 
-
-  
-
-* :small_blue_diamond: **`setMessageTimeout`**`(self, timeout)` - configure the timeout for waiting for the ack for a datagram
-
-  * **:arrow_forward: `timeout:`** the timeout in seconds. The default is 1 second.
+  * **interval:** the seconds per server tick
 
   
 
-* :small_blue_diamond: **`setTempConnectionTimeout`**`(self, timeout)` - configure the timeout for closing a connection if the connection handshake is not completed in time
+ **setKeepAliveInterval**`(self, interval)` - configure the timeout for sending keep alive datagrams to clients.
 
-  * **:arrow_forward: `timeout:`** the timeout in seconds. The default is 2 seconds.
+  * **interval:** 
 
   
 
-* :small_blue_diamond: **`shutdown`**`(self)` - stop the server if it is running
+ **setMessageTimeout**`(self, timeout)` - configure the timeout for waiting for the ack for a datagram
+
+  * **timeout:** the timeout in seconds. The default is 1 second.
+
+  
+
+ **setTempConnectionTimeout**`(self, timeout)` - configure the timeout for closing a connection if the connection handshake is not completed in time
+
+  * **timeout:** the timeout in seconds. The default is 2 seconds.
+
+  
+
+ **shutdown**`(self)` - stop the server if it is running
 
   
 
@@ -210,36 +210,36 @@ a headless server implementation
 
 #### Constructor:
 
-* :small_blue_diamond: **`TwistedServer`**`(self, ctxt, addr, install_signals=True)` - 
+ **TwistedServer**`(self, ctxt, addr, install_signals=True)` - 
 
-  * **:arrow_forward: `ctxt:`** A [ServerContext](#servercontext) instance
+  * **ctxt:** A [ServerContext](#servercontext) instance
 
-  * **:arrow_forward: `addr:`** 2-tuple host, port host can be "::" to bind to an ipv6 address
+  * **addr:** 2-tuple host, port host can be "::" to bind to an ipv6 address
 
-  * **:arrow_forward: `install_signals:`** whether to install a default signal handler when running on UNIX style operating systems
+  * **install_signals:** whether to install a default signal handler when running on UNIX style operating systems
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`listenTCP`**`(self, router, addr, privkey=None, cert=None)` - Enable a TCP listener. Must be called prior to run.
+ **listenTCP**`(self, router, addr, privkey=None, cert=None)` - Enable a TCP listener. Must be called prior to run.
 
-  * **:arrow_forward: `router:`** an router instance containing mapped endpoints
+  * **router:** an router instance containing mapped endpoints
 
-  * **:arrow_forward: `addr:`** a 2-tuple (host: str, port: int)
+  * **addr:** a 2-tuple (host: str, port: int)
 
-  * **:arrow_forward: `privkey:`** the path to a ssl private key
+  * **privkey:** the path to a ssl private key
 
-  * **:arrow_forward: `cert:`** the path to a ssl full chain certificate (pem file)
-
-  
-
-* :small_blue_diamond: **`run`**`(self)` - run the server.
+  * **cert:** the path to a ssl full chain certificate (pem file)
 
   
 
-* :small_blue_diamond: **`stop`**`(self)` - stop the server
+ **run**`(self)` - run the server.
+
+  
+
+ **stop**`(self)` - stop the server
 
   
 
@@ -264,41 +264,41 @@ A server implementation which displays run time metrics in a pygame interface
 
 #### Constructor:
 
-* :small_blue_diamond: **`GuiServer`**`(self, ctxt, addr)` - a server which displays metrics in a pygame window
+ **GuiServer**`(self, ctxt, addr)` - a server which displays metrics in a pygame window
 
-  * **:arrow_forward: `ctxt:`** A [ServerContext](#servercontext) instance
+  * **ctxt:** A [ServerContext](#servercontext) instance
 
-  * **:arrow_forward: `addr:`** The address to bind to. A 2-tuple (host, port). host can be "::" to bind to an ipv6 address
+  * **addr:** The address to bind to. A 2-tuple (host, port). host can be "::" to bind to an ipv6 address
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`init`**`(self)` - init pygame
+ **init**`(self)` - init pygame
 
   
 
-* :small_blue_diamond: **`listenTCP`**`(self, router, addr, privkey=None, cert=None)` - Enable a TCP listener. Must be called prior to run.
+ **listenTCP**`(self, router, addr, privkey=None, cert=None)` - Enable a TCP listener. Must be called prior to run.
 
-  * **:arrow_forward: `router:`** an router instance containing mapped endpoints
+  * **router:** an router instance containing mapped endpoints
 
-  * **:arrow_forward: `addr:`** a 2-tuple (host: str, port: int)
+  * **addr:** a 2-tuple (host: str, port: int)
 
-  * **:arrow_forward: `privkey:`** the path to a ssl private key
+  * **privkey:** the path to a ssl private key
 
-  * **:arrow_forward: `cert:`** the path to a ssl full chain certificate (pem file)
+  * **cert:** the path to a ssl full chain certificate (pem file)
 
   
 
-* :small_blue_diamond: **`run`**`(self)` - run the server.
+ **run**`(self)` - run the server.
 
   calls `init()` if it has not yet been run
 
   
 
 ---
-## :large_orange_diamond: ConnectionStatus
+##  ConnectionStatus
 The connection status
 
 
@@ -311,7 +311,7 @@ The connection status
 | DISCONNECTED | 4 | the client is not connected |
 | DROPPED | 5 | the client lost communication with the server |
 ---
-## :large_orange_diamond: RetryMode
+##  RetryMode
 The RetryMode is a per-message setting which controls how the message is delivered.
 
 When using one of the retry modes, it is possible for the same message to be included in multiple datagrams. The protocol automatically detects and drops duplicate messages.

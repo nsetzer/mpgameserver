@@ -23,39 +23,39 @@ The server public key is a Elliptic Curve public key that should be generated on
 
 #### Constructor:
 
-* :small_blue_diamond: **`UdpClient`**`(self, server_public_key=None)` - 
+ **UdpClient**`(self, server_public_key=None)` - 
 
-  * **:arrow_forward: `server_public_key:`** the public key used to identify the server
+  * **server_public_key:** the public key used to identify the server
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`connect`**`(self, addr, callback: Callable[[bool], NoneType] = None)` - connect to a udp socket server
+ **connect**`(self, addr, callback: Callable[[bool], NoneType] = None)` - connect to a udp socket server
 
-  * **:arrow_forward: `addr:`** a 2-tuple (host, port)
+  * **addr:** a 2-tuple (host, port)
 
-  * **:arrow_forward: `callback:`** a callable object to handle connection success or timeout callback signature: `fn(connected: bool)`
-
-  
-
-* :small_blue_diamond: **`connected`**`(self) -> bool` - 
-
-  * **:leftwards_arrow_with_hook: `returns:`** True if the client is connected to the server
+  * **callback:** a callable object to handle connection success or timeout callback signature: `fn(connected: bool)`
 
   
 
-* :small_blue_diamond: **`disconnect`**`(self)` - disconnect from the server.
+ **connected**`(self) -> bool` - 
+
+  * **returns:** True if the client is connected to the server
+
+  
+
+ **disconnect**`(self)` - disconnect from the server.
 
   This method only sets an internal flag to disconnect. use waitForDisconnect() to send a disconnect to the server and wait for the subsequent ack.
 
   
 
-* :small_blue_diamond: **`forceDisconnect`**`(self)` - 
-* :small_blue_diamond: **`getMessage`**`(self)` - get a single message received from the server
+ **forceDisconnect**`(self)` - 
+ **getMessage**`(self)` - get a single message received from the server
 
-  * **:leftwards_arrow_with_hook: `returns:`** a tuple (seqnum, msg)
+  * **returns:** a tuple (seqnum, msg)
 
   raises IndexError if the incoming message queue is empty
 
@@ -63,31 +63,31 @@ The server public key is a Elliptic Curve public key that should be generated on
 
   
 
-* :small_blue_diamond: **`getMessages`**`(self)` - This is a destructive call. It removes all messages from the internal queue
+ **getMessages**`(self)` - This is a destructive call. It removes all messages from the internal queue
 
-  * **:leftwards_arrow_with_hook: `returns:`** The list of unprocessed messages from the server, or an empty list
-
-  
-
-* :small_blue_diamond: **`hasMessages`**`(self)` - 
-
-  * **:leftwards_arrow_with_hook: `returns:`** True if there are unprocessed messages from the server
+  * **returns:** The list of unprocessed messages from the server, or an empty list
 
   
 
-* :small_blue_diamond: **`latency`**`(self)` - latency is the weighted average time it takes from sending a packet until it is acked.
+ **hasMessages**`(self)` - 
 
-  * **:leftwards_arrow_with_hook: `returns:`** The connection latency
+  * **returns:** True if there are unprocessed messages from the server
 
   
 
-* :small_blue_diamond: **`send`**`(self, msg: bytes, retry: int = -1, callback: Callable[[bool], NoneType] = None)` - send a message to the server
+ **latency**`(self)` - latency is the weighted average time it takes from sending a packet until it is acked.
 
-  * **:arrow_forward: `msg:`** the bytes to send
+  * **returns:** The connection latency
 
-  * **:arrow_forward: `retry:`** the RetryMode, default to RetryMode.NONE
+  
 
-  * **:arrow_forward: `callback:`** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise. If retry is negative then the callback will be called when the message is finally acked.
+ **send**`(self, msg: bytes, retry: int = -1, callback: Callable[[bool], NoneType] = None)` - send a message to the server
+
+  * **msg:** the bytes to send
+
+  * **retry:** the RetryMode, default to RetryMode.NONE
+
+  * **callback:** a function which is called when the message has been acked or after a timeout. The function should accept a single boolean which is true when the message is acked and false otherwise. If retry is negative then the callback will be called when the message is finally acked.
 
   The message is not sent immediatly, Instead on the next call to update() a datagram will be sent.
 
@@ -95,46 +95,46 @@ The server public key is a Elliptic Curve public key that should be generated on
 
   
 
-* :small_blue_diamond: **`send_guaranteed`**`(self, payload: bytes, callback: Callable[[bool], NoneType] = None)` - send the message and guarantee delivery by using RetryMode.RETRY_ON_TIMEOUT
+ **send_guaranteed**`(self, payload: bytes, callback: Callable[[bool], NoneType] = None)` - send the message and guarantee delivery by using RetryMode.RETRY_ON_TIMEOUT
 
-  * **:arrow_forward: `payload:`** 
+  * **payload:** 
 
-  * **:arrow_forward: `callback:`** 
-
-  
-
-* :small_blue_diamond: **`setConnectionTimeout`**`(self, timeout)` - configure the timeout for waiting for the response to the connection request.
-
-  * **:arrow_forward: `timeout:`** the timeout in seconds. The default is 5 seconds.
+  * **callback:** 
 
   
 
-* :small_blue_diamond: **`setKeepAliveInterval`**`(self, interval)` - configure the timeout for sending keep alive datagrams to clients.
+ **setConnectionTimeout**`(self, timeout)` - configure the timeout for waiting for the response to the connection request.
 
-  * **:arrow_forward: `interval:`** 
-
-  
-
-* :small_blue_diamond: **`setMessageTimeout`**`(self, timeout)` - configure the timeout for waiting for the ack for a datagram
-
-  * **:arrow_forward: `timeout:`** the timeout in seconds. The default is 1 second.
+  * **timeout:** the timeout in seconds. The default is 5 seconds.
 
   
 
-* :small_blue_diamond: **`stats`**`(self) -> mpgameserver.connection.ConnectionStats` - 
-* :small_blue_diamond: **`status`**`(self) -> mpgameserver.connection.ConnectionStatus` - 
+ **setKeepAliveInterval**`(self, interval)` - configure the timeout for sending keep alive datagrams to clients.
 
-  * **:leftwards_arrow_with_hook: `returns:`** the ConnectionStatus
-
-  
-
-* :small_blue_diamond: **`token`**`(self)` - get the client token. This is a unique id generated when the client connects used internally to represent the client.
-
-  * **:leftwards_arrow_with_hook: `returns:`** the unique id for this client
+  * **interval:** 
 
   
 
-* :small_blue_diamond: **`update`**`(self)` - send and receive messages
+ **setMessageTimeout**`(self, timeout)` - configure the timeout for waiting for the ack for a datagram
+
+  * **timeout:** the timeout in seconds. The default is 1 second.
+
+  
+
+ **stats**`(self) -> mpgameserver.connection.ConnectionStats` - 
+ **status**`(self) -> mpgameserver.connection.ConnectionStatus` - 
+
+  * **returns:** the ConnectionStatus
+
+  
+
+ **token**`(self)` - get the client token. This is a unique id generated when the client connects used internally to represent the client.
+
+  * **returns:** the unique id for this client
+
+  
+
+ **update**`(self)` - send and receive messages
 
   On every frame one datagram is sent to the server if there are pending messages to be sent. Each datagram will contain as many messages that can possibly fit into the packet size. The packet size is limited by the MTU size of the network, which is typically 1500 bytes. In practice the maximum packet size is 1472 bytes.
 
@@ -142,7 +142,7 @@ The server public key is a Elliptic Curve public key that should be generated on
 
   
 
-* :small_blue_diamond: **`waitForDisconnect`**`(self)` - block the current thread until the server has responded that it received the disconnect event.
+ **waitForDisconnect**`(self)` - block the current thread until the server has responded that it received the disconnect event.
 
   blocks up to 1 second before giving up
 
@@ -182,7 +182,7 @@ The attributes for packets sent/recv, bytes sent/recv and latency are sequence t
 **`timeouts`**: the lifetime count of outgoing packets that timed out
 
 ---
-## :large_orange_diamond: ConnectionStatus
+##  ConnectionStatus
 The connection status
 
 
@@ -195,7 +195,7 @@ The connection status
 | DISCONNECTED | 4 | the client is not connected |
 | DROPPED | 5 | the client lost communication with the server |
 ---
-## :large_orange_diamond: RetryMode
+##  RetryMode
 The RetryMode is a per-message setting which controls how the message is delivered.
 
 When using one of the retry modes, it is possible for the same message to be included in multiple datagrams. The protocol automatically detects and drops duplicate messages.

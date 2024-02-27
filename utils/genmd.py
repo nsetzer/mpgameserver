@@ -8,6 +8,19 @@ sys.path.insert(0, os.getcwd())
 import mpgameserver
 import inspect
 import types
+import pygame # side effect ensure installed
+
+#emoji_function = ":small_blue_diamond:"
+#emoji_method = ":small_blue_diamond:"
+#emoji_param = ":arrow_forward:"
+#emoji_return = ":leftwards_arrow_with_hook:"
+#emoji_enum = ":large_orange_diamond:"
+
+emoji_function = ""
+emoji_method = ""
+emoji_param = ""
+emoji_return = ""
+emoji_enum = ""
 
 def is_public_method(cls, attr):
     if attr.startswith('_'):
@@ -143,25 +156,32 @@ def genmd_function(stream, fn, name=None):
     if name is None:
         name = fn.__name__
 
+    fn_name = name
+
     # * **`getPrivateKeyPEM()`** - return a string representation of the key
     spec = inspect.getfullargspec(fn)
     sig = inspect.signature(fn)
     summary, params, returns, body = parse_doc(fn.__doc__)
 
     if summary.startswith('private '):
-        sys.stderr.write('ignoring private function %s\n' % name)
+        sys.stderr.write('ignoring private function %s\n' % fn_name)
         return
 
-    stream.write("* :small_blue_diamond: **`%s`**`%s` - %s\n" % (name, sig, summary))
+    stream.write("%s **%s**`%s` - %s\n" % (emoji_function, fn_name, sig, summary))
 
     for name, param in sig.parameters.items():
         if name == 'self':
             continue
 
-        stream.write("\n%s* **:arrow_forward: `%s:`** %s\n" % (tab, name, params.get(name, "")))
+        desc = params.get(name, "")
+
+        if not desc:
+            print("warning: no documentation for ", fn_name, name)
+
+        stream.write("\n%s* %s**%s:** %s\n" % (tab, emoji_param, name, desc))
 
     if returns:
-        stream.write("\n%s* **:leftwards_arrow_with_hook: `%s:`** %s\n" % (tab, 'returns', returns))
+        stream.write("\n%s* %s**%s:** %s\n" % (tab, emoji_return, 'returns', returns))
 
     if body:
         stream.write("\n")
@@ -187,9 +207,9 @@ def genmd_cls_method(stream, cls, attr):
         sys.stderr.write('ignoring private method %s of class %s\n' % (attr, cls.__name__))
         return
 
-    name = cls.__name__ if attr == '__init__' else method.__name__
+    meth_name = cls.__name__ if attr == '__init__' else method.__name__
 
-    stream.write("* :small_blue_diamond: **`%s`**`%s` - %s\n" % (name, sig, summary))
+    stream.write("%s **%s**`%s` - %s\n" % (emoji_method, meth_name, sig, summary))
 
     for name, param in sig.parameters.items():
         if name == 'self':
@@ -207,10 +227,16 @@ def genmd_cls_method(stream, cls, attr):
         #else:
         #    raise TypeError(param.annotation)
 
-        stream.write("\n%s* **:arrow_forward: `%s:`** %s\n" % (tab, name, params.get(name, "")))
+        desc = params.get(name, "")
+
+        if not desc:
+            print("warning: no documentation for ", cls.__name__, meth_name, name)
+
+
+        stream.write("\n%s* %s**%s:** %s\n" % (tab, emoji_param,name, desc))
 
     if returns:
-        stream.write("\n%s* **:leftwards_arrow_with_hook: `%s:`** %s\n" % (tab, 'returns', returns))
+        stream.write("\n%s* %s**%s:** %s\n" % (tab, emoji_return,'returns', returns))
 
     if body:
         stream.write("\n")
@@ -301,9 +327,9 @@ def genmd_cls(stream, cls, name=None, cls_vars=None):
 def genmd_enum(stream, cls, name=None, cls_vars=None):
     stream.write("---\n")
     if name:
-        stream.write("## :large_orange_diamond: %s\n" % name)
+        stream.write("## %s %s\n" % (emoji_enum, name))
     else:
-        stream.write("## :large_orange_diamond: %s\n" % cls.__name__)
+        stream.write("## %s %s\n" % (emoji_enum, cls.__name__))
     summary, attrs, _, body = parse_doc(cls.__doc__, 'attr')
 
     stream.write("%s\n\n" % summary)

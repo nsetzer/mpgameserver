@@ -79,13 +79,13 @@ Example:
 
 #### Constructor:
 
-* :small_blue_diamond: **`Resource`**`(self)` - 
+ **Resource**`(self)` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`routes`**`(self)` - 
+ **routes**`(self)` - 
 
-  * **:leftwards_arrow_with_hook: `returns:`** a list-of-3-tuples: [(http_method, url_pattern, callback)]
+  * **returns:** a list-of-3-tuples: [(http_method, url_pattern, callback)]
 
   
 
@@ -98,21 +98,21 @@ A Request contains the information received from a client
 
 #### Constructor:
 
-* :small_blue_diamond: **`Request`**`(self, addr: Tuple[str, int], method: str, path: str, params: Dict[str, str], fragment: str, headers: Dict[bytes, bytes], stream: IO[bytes])` - 
+ **Request**`(self, addr: Tuple[str, int], method: str, path: str, params: Dict[str, str], fragment: str, headers: Dict[bytes, bytes], stream: IO[bytes])` - 
 
-  * **:arrow_forward: `addr:`** A 2-tuple (host: str, port: int)
+  * **addr:** A 2-tuple (host: str, port: int)
 
-  * **:arrow_forward: `method:`** 
+  * **method:** 
 
-  * **:arrow_forward: `path:`** the absolute path + query + fragment
+  * **path:** the absolute path + query + fragment
 
-  * **:arrow_forward: `params:`** 
+  * **params:** 
 
-  * **:arrow_forward: `fragment:`** 
+  * **fragment:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 
-  * **:arrow_forward: `stream:`** a file like object for reading the request body
+  * **stream:** a file like object for reading the request body
 
   
 
@@ -138,11 +138,11 @@ A Request contains the information received from a client
 
 #### Methods:
 
-* :small_blue_diamond: **`json`**`(self)` - deserialize the request content as a JSON
+ **json**`(self)` - deserialize the request content as a JSON
 
   
 
-* :small_blue_diamond: **`message`**`(self)` - deserialize the request content as a Serializable instance
+ **message**`(self)` - deserialize the request content as a Serializable instance
 
   
 
@@ -155,16 +155,16 @@ A Request contains the information received from a client
 
 #### Constructor:
 
-* :small_blue_diamond: **`Router`**`(self)` - 
+ **Router**`(self)` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`dispatch`**`(self, request)` - 
+ **dispatch**`(self, request)` - 
 
-  * **:arrow_forward: `request:`** 
-* :small_blue_diamond: **`registerRoutes`**`(self, routes)` - register routes with the router
+  * **request:** 
+ **registerRoutes**`(self, routes)` - register routes with the router
 
-  * **:arrow_forward: `routes:`** either a Resource instance, or a list-of-3-tuples: [(http_method, url_pattern, callback)]
+  * **routes:** either a Resource instance, or a list-of-3-tuples: [(http_method, url_pattern, callback)]
 
   
 
@@ -175,15 +175,15 @@ A Request contains the information received from a client
 
 #### Constructor:
 
-* :small_blue_diamond: **`Response`**`(self, payload=None, status_code=200, headers=None, compress=False)` - 
+ **Response**`(self, payload=None, status_code=200, headers=None, compress=False)` - 
 
-  * **:arrow_forward: `payload:`** 
+  * **payload:** 
 
-  * **:arrow_forward: `status_code:`** 
+  * **status_code:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 
-  * **:arrow_forward: `compress:`** 
+  * **compress:** 
 ---
 ## ErrorResponse
 Represents an http error response returned from the server
@@ -195,13 +195,13 @@ Clients will use this class to hold the original exception raised by urllib.
 
 #### Constructor:
 
-* :small_blue_diamond: **`ErrorResponse`**`(self, obj, status_code=400, headers=None)` - 
+ **ErrorResponse**`(self, obj, status_code=400, headers=None)` - 
 
-  * **:arrow_forward: `obj:`** 
+  * **obj:** 
 
-  * **:arrow_forward: `status_code:`** 
+  * **status_code:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 ---
 ## JsonResponse
 
@@ -209,13 +209,13 @@ Clients will use this class to hold the original exception raised by urllib.
 
 #### Constructor:
 
-* :small_blue_diamond: **`JsonResponse`**`(self, obj, status_code=200, headers=None)` - 
+ **JsonResponse**`(self, obj, status_code=200, headers=None)` - 
 
-  * **:arrow_forward: `obj:`** 
+  * **obj:** 
 
-  * **:arrow_forward: `status_code:`** 
+  * **status_code:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 ---
 ## SerializableResponse
 
@@ -223,13 +223,13 @@ Clients will use this class to hold the original exception raised by urllib.
 
 #### Constructor:
 
-* :small_blue_diamond: **`SerializableResponse`**`(self, obj, status_code=200, headers=None)` - 
+ **SerializableResponse**`(self, obj, status_code=200, headers=None)` - 
 
-  * **:arrow_forward: `obj:`** 
+  * **obj:** 
 
-  * **:arrow_forward: `status_code:`** 
+  * **status_code:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 ---
 ## HTTPServer
 
@@ -237,21 +237,21 @@ Clients will use this class to hold the original exception raised by urllib.
 
 #### Constructor:
 
-* :small_blue_diamond: **`HTTPServer`**`(self, addr, privkey=None, cert=None)` - 
+ **HTTPServer**`(self, addr, privkey=None, cert=None)` - 
 
-  * **:arrow_forward: `addr:`** 
+  * **addr:** 
 
-  * **:arrow_forward: `privkey:`** 
+  * **privkey:** 
 
-  * **:arrow_forward: `cert:`** 
+  * **cert:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`registerRoutes`**`(self, routes)` - 
+ **registerRoutes**`(self, routes)` - 
 
-  * **:arrow_forward: `routes:`** 
-* :small_blue_diamond: **`routes`**`(self)` - 
-* :small_blue_diamond: **`run`**`(self)` - 
+  * **routes:** 
+ **routes**`(self)` - 
+ **run**`(self)` - 
 ---
 ## HTTPClient
 docstring for HTTPClient
@@ -259,71 +259,71 @@ docstring for HTTPClient
 
 #### Constructor:
 
-* :small_blue_diamond: **`HTTPClient`**`(self, addr, protocol='http')` - 
+ **HTTPClient**`(self, addr, protocol='http')` - 
 
-  * **:arrow_forward: `addr:`** 
+  * **addr:** 
 
-  * **:arrow_forward: `protocol:`** 
+  * **protocol:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`delete`**`(self, path, query=None, headers=None, callback=None)` - 
+ **delete**`(self, path, query=None, headers=None, callback=None)` - 
 
-  * **:arrow_forward: `path:`** 
+  * **path:** 
 
-  * **:arrow_forward: `query:`** 
+  * **query:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 
-  * **:arrow_forward: `callback:`** 
-* :small_blue_diamond: **`get`**`(self, path, query=None, headers=None, callback=None)` - 
+  * **callback:** 
+ **get**`(self, path, query=None, headers=None, callback=None)` - 
 
-  * **:arrow_forward: `path:`** 
+  * **path:** 
 
-  * **:arrow_forward: `query:`** 
+  * **query:** 
 
-  * **:arrow_forward: `headers:`** 
+  * **headers:** 
 
-  * **:arrow_forward: `callback:`** 
-* :small_blue_diamond: **`getResponses`**`(self)` - yield from the pending set of requests. return a handle containing information for each completed request.
+  * **callback:** 
+ **getResponses**`(self)` - yield from the pending set of requests. return a handle containing information for each completed request.
 
-  * **:leftwards_arrow_with_hook: `returns:`** a generator of completed RequestHandle instances
-
-  
-
-* :small_blue_diamond: **`pending`**`(self)` - get the number of pending requests
-
-  * **:leftwards_arrow_with_hook: `returns:`** the count of pending requests
+  * **returns:** a generator of completed RequestHandle instances
 
   
 
-* :small_blue_diamond: **`post`**`(self, path, payload, query=None, headers=None, callback=None)` - 
+ **pending**`(self)` - get the number of pending requests
 
-  * **:arrow_forward: `path:`** 
+  * **returns:** the count of pending requests
 
-  * **:arrow_forward: `payload:`** 
+  
 
-  * **:arrow_forward: `query:`** 
+ **post**`(self, path, payload, query=None, headers=None, callback=None)` - 
 
-  * **:arrow_forward: `headers:`** 
+  * **path:** 
 
-  * **:arrow_forward: `callback:`** 
-* :small_blue_diamond: **`put`**`(self, path, payload, query=None, headers=None, callback=None)` - 
+  * **payload:** 
 
-  * **:arrow_forward: `path:`** 
+  * **query:** 
 
-  * **:arrow_forward: `payload:`** 
+  * **headers:** 
 
-  * **:arrow_forward: `query:`** 
+  * **callback:** 
+ **put**`(self, path, payload, query=None, headers=None, callback=None)` - 
 
-  * **:arrow_forward: `headers:`** 
+  * **path:** 
 
-  * **:arrow_forward: `callback:`** 
-* :small_blue_diamond: **`start`**`(self)` - 
-* :small_blue_diamond: **`stop`**`(self)` - 
-* :small_blue_diamond: **`update`**`(self)` - 
+  * **payload:** 
+
+  * **query:** 
+
+  * **headers:** 
+
+  * **callback:** 
+ **start**`(self)` - 
+ **stop**`(self)` - 
+ **update**`(self)` - 
 ---
-## :large_orange_diamond: WebSocketOpCode
+##  WebSocketOpCode
 opcodes indicating the kind of message sent or received over a websocket connection
 
 
@@ -339,35 +339,19 @@ opcodes indicating the kind of message sent or received over a websocket connect
 
 ## :cherry_blossom: Functions:
 
-* :small_blue_diamond: **`path_join_safe`**`(root_directory: str, filename: str)` - join the two path components ensuring that the returned value exists with root_directory as prefix.
+ **path_join_safe**`(root_directory: str, filename: str)` - join the two path components ensuring that the returned value exists with root_directory as prefix.
 
-  * **:arrow_forward: `root_directory:`** the root directory. This must allways be provided by a trusted source.
+  * **root_directory:** the root directory. This must allways be provided by a trusted source.
 
-  * **:arrow_forward: `filename:`** a relative path to a file. This may be provided from untrusted input
+  * **filename:** a relative path to a file. This may be provided from untrusted input
 
   Using this function can prevent files not intended to be exposed by a webserver from being served, by making sure the returned path exists in a directory under the root directory.
 
   
 
-* :small_blue_diamond: **`get`**`(path)` - decorator which registers a class method as a GET handler
+ **get**`(path)` - decorator which registers a class method as a GET handler
 
-  * **:arrow_forward: `path:`** 
-
-  The decorated function should have the signature:
-
-  
-
-    ```
-    def myhandler(self, request: Request)
-    ```
-
-  
-
-* :small_blue_diamond: **`put`**`(path, max_content_length=5242880)` - decorator which registers a class method as a PUT handler
-
-  * **:arrow_forward: `path:`** 
-
-  * **:arrow_forward: `max_content_length:`** 
+  * **path:** 
 
   The decorated function should have the signature:
 
@@ -379,25 +363,11 @@ opcodes indicating the kind of message sent or received over a websocket connect
 
   
 
-* :small_blue_diamond: **`post`**`(path, max_content_length=5242880)` - decorator which registers a class method as a POST handler
+ **put**`(path, max_content_length=5242880)` - decorator which registers a class method as a PUT handler
 
-  * **:arrow_forward: `path:`** 
+  * **path:** 
 
-  * **:arrow_forward: `max_content_length:`** 
-
-  The decorated function should have the signature:
-
-  
-
-    ```
-    def myhandler(self, request: Request)
-    ```
-
-  
-
-* :small_blue_diamond: **`delete`**`(path)` - decorator which registers a class method as a DELETE handler
-
-  * **:arrow_forward: `path:`** 
+  * **max_content_length:** 
 
   The decorated function should have the signature:
 
@@ -409,9 +379,39 @@ opcodes indicating the kind of message sent or received over a websocket connect
 
   
 
-* :small_blue_diamond: **`websocket`**`(path)` - decorator which registers a class method as a websocket handler
+ **post**`(path, max_content_length=5242880)` - decorator which registers a class method as a POST handler
 
-  * **:arrow_forward: `path:`** 
+  * **path:** 
+
+  * **max_content_length:** 
+
+  The decorated function should have the signature:
+
+  
+
+    ```
+    def myhandler(self, request: Request)
+    ```
+
+  
+
+ **delete**`(path)` - decorator which registers a class method as a DELETE handler
+
+  * **path:** 
+
+  The decorated function should have the signature:
+
+  
+
+    ```
+    def myhandler(self, request: Request)
+    ```
+
+  
+
+ **websocket**`(path)` - decorator which registers a class method as a websocket handler
+
+  * **path:** 
 
   The decorated function should have the signature:
 
@@ -423,9 +423,9 @@ opcodes indicating the kind of message sent or received over a websocket connect
 
   
 
-* :small_blue_diamond: **`header`**`(header)` - decorator for documenting expected headers
+ **header**`(header)` - decorator for documenting expected headers
 
-  * **:arrow_forward: `header:`** 
-* :small_blue_diamond: **`param`**`(param)` - decorator for documenting expected query parameters
+  * **header:** 
+ **param**`(param)` - decorator for documenting expected query parameters
 
-  * **:arrow_forward: `param:`** 
+  * **param:** 

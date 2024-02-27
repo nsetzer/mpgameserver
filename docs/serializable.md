@@ -76,11 +76,11 @@ This class exposes a method to control what the next unique id will be before a 
 
 #### Static Methods:
 
-* :small_blue_diamond: **`setRootId`**`(module, base_type_id)` - Change the next uid for SerializableTypes defined in a given module
+ **setRootId**`(module, base_type_id)` - Change the next uid for SerializableTypes defined in a given module
 
-  * **:arrow_forward: `module:`** the name of a module
+  * **module:** the name of a module
 
-  * **:arrow_forward: `base_type_id:`** the first type id to assign for a given module
+  * **base_type_id:** the first type id to assign for a given module
 
   After calling this method all classes that are defined in the current file will be enumerated in order starting with the given type_id
 
@@ -105,9 +105,9 @@ Base class for defining a new serializable class. Sub Classes of Serializable ca
 
 #### Constructor:
 
-* :small_blue_diamond: **`Serializable`**`(self, **kwargs)` - 
+ **Serializable**`(self, **kwargs)` - 
 
-  * **:arrow_forward: `kwargs:`** 
+  * **kwargs:** 
 
 #### Public Attributes:
 
@@ -116,9 +116,9 @@ Base class for defining a new serializable class. Sub Classes of Serializable ca
 
 #### Class Methods:
 
-* :small_blue_diamond: **`fromJson`**`(record)` - initialize a new instance of Type from a JSON object
+ **fromJson**`(record)` - initialize a new instance of Type from a JSON object
 
-  * **:arrow_forward: `record:`** a JSON object
+  * **record:** a JSON object
 
   Uses the type annotations for members of Type to determine how to convert the JSON object attributes into member attributes
 
@@ -128,62 +128,62 @@ Base class for defining a new serializable class. Sub Classes of Serializable ca
 
   
 
-* :small_blue_diamond: **`loads`**`(string, **kwargs)` - 
+ **loads**`(string, **kwargs)` - 
 
-  * **:arrow_forward: `string:`** 
+  * **string:** 
 
-  * **:arrow_forward: `kwargs:`** 
+  * **kwargs:** 
 
 #### Static Methods:
 
-* :small_blue_diamond: **`loadb`**`(stream, **kwargs)` - 
+ **loadb**`(stream, **kwargs)` - 
 
-  * **:arrow_forward: `stream:`** 
+  * **stream:** 
 
-  * **:arrow_forward: `kwargs:`** 
+  * **kwargs:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`deserialize`**`(self, stream, **kwargs)` - populate member attributes by reading fields from a stream.
+ **deserialize**`(self, stream, **kwargs)` - populate member attributes by reading fields from a stream.
 
-  * **:arrow_forward: `stream:`** a file like object opened for reading bytes from.
+  * **stream:** a file like object opened for reading bytes from.
 
-  * **:arrow_forward: `kwargs:`** extra arguments that are passed to deserialize, a specialization of deserialize can use kwargs to control how the class is deserialized
+  * **kwargs:** extra arguments that are passed to deserialize, a specialization of deserialize can use kwargs to control how the class is deserialized
 
-  * **:leftwards_arrow_with_hook: `returns:`** self
+  * **returns:** self
 
   Note: the return value can be any serializable type to implement versioning, old versions can be deserialized and then convert to the new version and return that instead by reimplementing this function for that type.
 
   
 
-* :small_blue_diamond: **`dumpb`**`(self, **kwargs)` - return a byte array representation of this class
+ **dumpb**`(self, **kwargs)` - return a byte array representation of this class
 
-  * **:arrow_forward: `kwargs:`** extra arguments that are passed to deserialize, a specialization of deserialize can use kwargs to control how the class is deserialized
-
-  
-
-* :small_blue_diamond: **`dumps`**`(self, indent=None, sort_keys=False, **kwargs)` - 
-
-  * **:arrow_forward: `indent:`** 
-
-  * **:arrow_forward: `sort_keys:`** 
-
-  * **:arrow_forward: `kwargs:`** 
-* :small_blue_diamond: **`serialize`**`(self, stream, **kwargs)` - Write the content of this class to the stream
-
-  * **:arrow_forward: `stream:`** a file like object opened for writing bytes to.
-
-  * **:arrow_forward: `kwargs:`** 
+  * **kwargs:** extra arguments that are passed to deserialize, a specialization of deserialize can use kwargs to control how the class is deserialized
 
   
 
-* :small_blue_diamond: **`serialize_header`**`(self, stream)` - Writes a header to the stream
+ **dumps**`(self, indent=None, sort_keys=False, **kwargs)` - 
 
-  * **:arrow_forward: `stream:`** a file like object opened for writing bytes to.
+  * **indent:** 
+
+  * **sort_keys:** 
+
+  * **kwargs:** 
+ **serialize**`(self, stream, **kwargs)` - Write the content of this class to the stream
+
+  * **stream:** a file like object opened for writing bytes to.
+
+  * **kwargs:** 
 
   
 
-* :small_blue_diamond: **`toJson`**`(self)` - return a JSON object representation of this class
+ **serialize_header**`(self, stream)` - Writes a header to the stream
+
+  * **stream:** a file like object opened for writing bytes to.
+
+  
+
+ **toJson**`(self)` - return a JSON object representation of this class
 
   JSON uses a limited subset of valid python types. In particular, the following transforms are performed:
 
@@ -204,9 +204,9 @@ A SerializableEnum can be used as part of a Generic specifier, for either typing
 
 #### Constructor:
 
-* :small_blue_diamond: **`SerializableEnum`**`(self, value=None)` - 
+ **SerializableEnum**`(self, value=None)` - 
 
-  * **:arrow_forward: `value:`** 
+  * **value:** 
 
 #### Public Attributes:
 
@@ -215,36 +215,36 @@ A SerializableEnum can be used as part of a Generic specifier, for either typing
 
 #### Class Methods:
 
-* :small_blue_diamond: **`fromJson`**`(value)` - 
+ **fromJson**`(value)` - 
 
-  * **:arrow_forward: `value:`** 
+  * **value:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`deserialize`**`(self, stream, **kwargs)` - 
+ **deserialize**`(self, stream, **kwargs)` - 
 
-  * **:arrow_forward: `stream:`** a file like object opened for writing bytes to.
+  * **stream:** a file like object opened for writing bytes to.
 
-  * **:arrow_forward: `kwargs:`** 
-
-  
-
-* :small_blue_diamond: **`name`**`(self)` - return a string representation of the enum value
-* :small_blue_diamond: **`serialize`**`(self, stream, **kwargs)` - write the current value to a stream
-
-  * **:arrow_forward: `stream:`** a file like object opened for writing bytes to.
-
-  * **:arrow_forward: `kwargs:`** 
+  * **kwargs:** 
 
   
 
-* :small_blue_diamond: **`serialize_header`**`(self, stream)` - 
+ **name**`(self)` - return a string representation of the enum value
+ **serialize**`(self, stream, **kwargs)` - write the current value to a stream
 
-  * **:arrow_forward: `stream:`** a file like object opened for writing bytes to.
+  * **stream:** a file like object opened for writing bytes to.
+
+  * **kwargs:** 
 
   
 
-* :small_blue_diamond: **`toJson`**`(self)` - return a dictionary suitable for passing to json.dumps
+ **serialize_header**`(self, stream)` - 
+
+  * **stream:** a file like object opened for writing bytes to.
+
+  
+
+ **toJson**`(self)` - return a dictionary suitable for passing to json.dumps
 
   
 

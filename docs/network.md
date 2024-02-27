@@ -81,13 +81,13 @@ Sorting is undefined over a large range
 
 #### Class Methods:
 
-* :small_blue_diamond: **`maximum`**`() -> int` - 
+ **maximum**`() -> int` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`diff`**`(self, other) -> int` - returns the difference between two sequence numbers
+ **diff**`(self, other) -> int` - returns the difference between two sequence numbers
 
-  * **:arrow_forward: `other:`** 
+  * **other:** 
 
   This implements 'traditional integer' subtraction as opposed to what __sub__ implements
 
@@ -103,11 +103,11 @@ Sorting is undefined over a large range
 
   
 
-* :small_blue_diamond: **`newer_than`**`(self, other)` - Test
+ **newer_than**`(self, other)` - Test
 
-  * **:arrow_forward: `other:`** 
+  * **other:** 
 
-  * **:leftwards_arrow_with_hook: `returns:`** True if this SeqNum is more recent than the given SeqNum
+  * **returns:** True if this SeqNum is more recent than the given SeqNum
 
   
 
@@ -120,24 +120,24 @@ The bitfield keeps track of recently received messages. It uses a one hot encodi
 
 #### Constructor:
 
-* :small_blue_diamond: **`BitField`**`(self, nbits=32)` - 
+ **BitField**`(self, nbits=32)` - 
 
-  * **:arrow_forward: `nbits:`** the number of bits to use for encoding the history of inserted messages
+  * **nbits:** the number of bits to use for encoding the history of inserted messages
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`contains`**`(self, seqnum: mpgameserver.connection.SeqNum)` - test if the bitfield currently contains the Sequence Number
+ **contains**`(self, seqnum: mpgameserver.connection.SeqNum)` - test if the bitfield currently contains the Sequence Number
 
-  * **:arrow_forward: `seqnum:`** The Sequence Number
+  * **seqnum:** The Sequence Number
 
   
 
-* :small_blue_diamond: **`insert`**`(self, seqnum: mpgameserver.connection.SeqNum)` - insert a sequence number
+ **insert**`(self, seqnum: mpgameserver.connection.SeqNum)` - insert a sequence number
 
-  * **:arrow_forward: `seqnum:`** The Sequence Number
+  * **seqnum:** The Sequence Number
 
   raises a DuplicationError if an exception is thrown
 
@@ -168,7 +168,7 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
 
 #### Constructor:
 
-* :small_blue_diamond: **`PacketHeader`**`(self)` - 
+ **PacketHeader**`(self)` - 
 
 #### Public Attributes:
 
@@ -191,34 +191,34 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
 
 #### Static Methods:
 
-* :small_blue_diamond: **`create`**`(isServer, ctime, pkt_type, seq, ack, ack_bits)` - contruct a new header
+ **create**`(isServer, ctime, pkt_type, seq, ack, ack_bits)` - contruct a new header
 
-  * **:arrow_forward: `isServer:`** True when it is the server constructing the header
+  * **isServer:** True when it is the server constructing the header
 
-  * **:arrow_forward: `ctime:`** the current time
+  * **ctime:** the current time
 
-  * **:arrow_forward: `pkt_type:`** The type of this packet
+  * **pkt_type:** The type of this packet
 
-  * **:arrow_forward: `seq:`** the SeqNum for this Packet
+  * **seq:** the SeqNum for this Packet
 
-  * **:arrow_forward: `ack:`** the SeqNum of the last packet received from remote
+  * **ack:** the SeqNum of the last packet received from remote
 
-  * **:arrow_forward: `ack_bits:`** 32-bit integer bit-field indicating received packets
+  * **ack_bits:** 32-bit integer bit-field indicating received packets
 
   
 
-* :small_blue_diamond: **`from_bytes`**`(isServer, datagram)` - extract the header from a datagram
+ **from_bytes**`(isServer, datagram)` - extract the header from a datagram
 
-  * **:arrow_forward: `isServer:`** True when it is the server that is extracting the header
+  * **isServer:** True when it is the server that is extracting the header
 
-  * **:arrow_forward: `datagram:`** the bytes to decode
+  * **datagram:** the bytes to decode
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`to_bytes`**`(self)` - Serialize the packet header to a byte array
+ **to_bytes**`(self)` - Serialize the packet header to a byte array
 
   
 
@@ -229,38 +229,38 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
 
 #### Constructor:
 
-* :small_blue_diamond: **`Packet`**`(self)` - 
+ **Packet**`(self)` - 
 
 #### Static Methods:
 
-* :small_blue_diamond: **`create`**`(hdr: mpgameserver.connection.PacketHeader, msgs: List[mpgameserver.connection.PendingMessage])` - create a new packet given a header and a list messages
+ **create**`(hdr: mpgameserver.connection.PacketHeader, msgs: List[mpgameserver.connection.PendingMessage])` - create a new packet given a header and a list messages
 
-  * **:arrow_forward: `hdr:`** 
+  * **hdr:** 
 
-  * **:arrow_forward: `msgs:`** 
+  * **msgs:** 
 
   hdr: PacketHeader msgs: list of PendingMessage
 
   
 
-* :small_blue_diamond: **`from_bytes`**`(hdr, key, datagram)` - 
+ **from_bytes**`(hdr, key, datagram)` - 
 
-  * **:arrow_forward: `hdr:`** 
+  * **hdr:** 
 
-  * **:arrow_forward: `key:`** 
+  * **key:** 
 
-  * **:arrow_forward: `datagram:`** 
-* :small_blue_diamond: **`overhead`**`(n)` - return the amount of overhead for n messages in a packet
+  * **datagram:** 
+ **overhead**`(n)` - return the amount of overhead for n messages in a packet
 
-  * **:arrow_forward: `n:`** 
+  * **n:** 
 
   there is 2 bytes of overhead for a single message to include the message sequence number. There is 5 bytes of overhead for 2 or more messages to include the length, type, and message sequence number
 
   
 
-* :small_blue_diamond: **`setMTU`**`(mtu)` - set the MTU size for the network protocol, and adjust global constants accordingly.
+ **setMTU**`(mtu)` - set the MTU size for the network protocol, and adjust global constants accordingly.
 
-  * **:arrow_forward: `mtu:`** Maximum transmission unit.
+  * **mtu:** Maximum transmission unit.
 
   calling this function will change the size of packets that are constructed by the protocol.
 
@@ -273,12 +273,12 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
 
 #### Methods:
 
-* :small_blue_diamond: **`to_bytes`**`(self, key)` - 
+ **to_bytes**`(self, key)` - 
 
-  * **:arrow_forward: `key:`** 
-* :small_blue_diamond: **`total_size`**`(self, key)` - return the size of the encoded packet
+  * **key:** 
+ **total_size**`(self, key)` - return the size of the encoded packet
 
-  * **:arrow_forward: `key:`** 
+  * **key:** 
 
   
 
@@ -289,19 +289,19 @@ The first 12 bytes of the header are used as the IV when encrypting a packet. Th
 
 #### Constructor:
 
-* :small_blue_diamond: **`PendingMessage`**`(self, seq, type, payload, callback, retry)` - 
+ **PendingMessage**`(self, seq, type, payload, callback, retry)` - 
 
-  * **:arrow_forward: `seq:`** 
+  * **seq:** 
 
-  * **:arrow_forward: `type:`** 
+  * **type:** 
 
-  * **:arrow_forward: `payload:`** 
+  * **payload:** 
 
-  * **:arrow_forward: `callback:`** 
+  * **callback:** 
 
-  * **:arrow_forward: `retry:`** 
+  * **retry:** 
 ---
-## :large_orange_diamond: PacketIdentifier
+##  PacketIdentifier
 The packet magic number. Used to cheaply identify a packet as originating from a client or server implementing the MpGameServer protocol
 
 
@@ -311,7 +311,7 @@ The packet magic number. Used to cheaply identify a packet as originating from a
 | TO_CLIENT | b'FSOC' | Indicates a packet being sent to a client |
 | TO_SERVER | b'FSOS' | Indicates a packet being sent to the server |
 ---
-## :large_orange_diamond: PacketType
+##  PacketType
 The CLIENT_HELLO, SERVER_HELLO, CHALLENGE_RESP types implement a three way handshake that agree on an encryption key and verify both sides are implementing the same protocol.
 
 
@@ -327,7 +327,7 @@ The CLIENT_HELLO, SERVER_HELLO, CHALLENGE_RESP types implement a three way hands
 | APP | 6 | user defined packet |
 | APP_FRAGMENT | 7 | user defined packet was split into fragments |
 ---
-## :large_orange_diamond: ConnectionStatus
+##  ConnectionStatus
 The connection status
 
 
@@ -340,7 +340,7 @@ The connection status
 | DISCONNECTED | 4 | the client is not connected |
 | DROPPED | 5 | the client lost communication with the server |
 ---
-## :large_orange_diamond: RetryMode
+##  RetryMode
 The RetryMode is a per-message setting which controls how the message is delivered.
 
 When using one of the retry modes, it is possible for the same message to be included in multiple datagrams. The protocol automatically detects and drops duplicate messages.

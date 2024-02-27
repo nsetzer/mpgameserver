@@ -23,45 +23,45 @@
 
 #### Constructor:
 
-* :small_blue_diamond: **`GameScene`**`(self)` - 
+ **GameScene**`(self)` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`handle_event`**`(self, evt)` - 
+ **handle_event**`(self, evt)` - 
 
-  * **:arrow_forward: `evt:`** 
-* :small_blue_diamond: **`handle_message`**`(self, msg)` - 
+  * **evt:** 
+ **handle_message**`(self, msg)` - 
 
-  * **:arrow_forward: `msg:`** 
-* :small_blue_diamond: **`paint`**`(self, surface)` - called once for every frame to paint the game state to the given surface
+  * **msg:** 
+ **paint**`(self, surface)` - called once for every frame to paint the game state to the given surface
 
-  * **:arrow_forward: `surface:`** 
+  * **surface:** 
 
   
 
-* :small_blue_diamond: **`paintOverlay`**`(self, window, scale)` - called once for every frame for painting after the game surface has been resized to the display size.
+ **paintOverlay**`(self, window, scale)` - called once for every frame for painting after the game surface has been resized to the display size.
 
-  * **:arrow_forward: `window:`** the surface to paint
+  * **window:** the surface to paint
 
-  * **:arrow_forward: `scale:`** the scale factor relative the the surface passed in to paint()
+  * **scale:** the scale factor relative the the surface passed in to paint()
 
   This can be used for drawing smooth fonts by drawing the fonts to the game surface after resizing the surface for full screen mode.
 
   
 
-* :small_blue_diamond: **`resizeEvent`**`(self, surface, scale)` - called when the window is resized
+ **resizeEvent**`(self, surface, scale)` - called when the window is resized
 
-  * **:arrow_forward: `surface:`** 
+  * **surface:** 
 
-  * **:arrow_forward: `scale:`** 
+  * **scale:** 
 
   new_size = (screen.get_width(), screen.get_height())
 
   
 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - called once for every frame to update the game state
+ **update**`(self, delta_t)` - called once for every frame to update the game state
 
-  * **:arrow_forward: `delta_t:`** the amount of time that has elapsed since the last call. This value is stable and will be 1/FPS.
+  * **delta_t:** the amount of time that has elapsed since the last call. This value is stable and will be 1/FPS.
 
   
 
@@ -72,29 +72,29 @@
 
 #### Constructor:
 
-* :small_blue_diamond: **`Engine`**`(self)` - 
+ **Engine**`(self)` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`afterFrame`**`(self)` - 
-* :small_blue_diamond: **`beforeFrame`**`(self)` - 
-* :small_blue_diamond: **`handle_event`**`(self, event)` - 
+ **afterFrame**`(self)` - 
+ **beforeFrame**`(self)` - 
+ **handle_event**`(self, event)` - 
 
-  * **:arrow_forward: `event:`** 
-* :small_blue_diamond: **`init`**`(self, scene=None)` - 
+  * **event:** 
+ **init**`(self, scene=None)` - 
 
-  * **:arrow_forward: `scene:`** 
-* :small_blue_diamond: **`run`**`(self)` - 
-* :small_blue_diamond: **`screenpos`**`(self, windowpos)` - 
+  * **scene:** 
+ **run**`(self)` - 
+ **screenpos**`(self, windowpos)` - 
 
-  * **:arrow_forward: `windowpos:`** 
-* :small_blue_diamond: **`setActive`**`(self, active)` - 
+  * **windowpos:** 
+ **setActive**`(self, active)` - 
 
-  * **:arrow_forward: `active:`** 
-* :small_blue_diamond: **`setScene`**`(self, scene)` - 
+  * **active:** 
+ **setScene**`(self, scene)` - 
 
-  * **:arrow_forward: `scene:`** 
-* :small_blue_diamond: **`setWindowMode`**`(self)` - the first time this is called the environment variables are used to suggest  how to display the window
+  * **scene:** 
+ **setWindowMode**`(self)` - the first time this is called the environment variables are used to suggest  how to display the window
 
   subsequent calls require changing the window to a bogus value before updating the sdl_window and changing the mode to the new correct value
 
@@ -113,22 +113,22 @@ TODO: add an option to repeat sending direction or button press events
 
 #### Constructor:
 
-* :small_blue_diamond: **`KeyboardInputDevice`**`(self, direction_config, button_config, callback=None)` - 
+ **KeyboardInputDevice**`(self, direction_config, button_config, callback=None)` - 
 
-  * **:arrow_forward: `direction_config:`** 
+  * **direction_config:** 
 
-  * **:arrow_forward: `button_config:`** 
+  * **button_config:** 
 
-  * **:arrow_forward: `callback:`** 
+  * **callback:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`handle_event`**`(self, evt)` - 
+ **handle_event**`(self, evt)` - 
 
-  * **:arrow_forward: `evt:`** 
-* :small_blue_diamond: **`setCallback`**`(self, callback)` - 
+  * **evt:** 
+ **setCallback**`(self, callback)` - 
 
-  * **:arrow_forward: `callback:`** 
+  * **callback:** 
 ---
 ## JoystickInputDevice
 
@@ -136,24 +136,24 @@ TODO: add an option to repeat sending direction or button press events
 
 #### Constructor:
 
-* :small_blue_diamond: **`JoystickInputDevice`**`(self, instance_id, joy_config, button_config, callback=None)` - 
+ **JoystickInputDevice**`(self, instance_id, joy_config, button_config, callback=None)` - 
 
-  * **:arrow_forward: `instance_id:`** 
+  * **instance_id:** 
 
-  * **:arrow_forward: `joy_config:`** 
+  * **joy_config:** 
 
-  * **:arrow_forward: `button_config:`** 
+  * **button_config:** 
 
-  * **:arrow_forward: `callback:`** 
+  * **callback:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`handle_event`**`(self, evt)` - 
+ **handle_event**`(self, evt)` - 
 
-  * **:arrow_forward: `evt:`** 
-* :small_blue_diamond: **`setCallback`**`(self, callback)` - 
+  * **evt:** 
+ **setCallback**`(self, callback)` - 
 
-  * **:arrow_forward: `callback:`** 
+  * **callback:** 
 ---
 ## NetworkPlayerState
 
@@ -169,34 +169,34 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`InputController`**`(self, input_device, entity, client=None, input_delay=5, update_interval=0.1)` - 
+ **InputController**`(self, input_device, entity, client=None, input_delay=5, update_interval=0.1)` - 
 
-  * **:arrow_forward: `input_device:`** A keyboard or joystick input device
+  * **input_device:** A keyboard or joystick input device
 
-  * **:arrow_forward: `entity:`** The entity to pass input events to
+  * **entity:** The entity to pass input events to
 
-  * **:arrow_forward: `client:`** the UdP client to use for sending information to the server
+  * **client:** the UdP client to use for sending information to the server
 
-  * **:arrow_forward: `input_delay:`** The number of frames to delay user input before applying to the entity
+  * **input_delay:** The number of frames to delay user input before applying to the entity
 
-  * **:arrow_forward: `update_interval:`** send the entity state to the serveral at this interval, default 100ms
+  * **update_interval:** send the entity state to the serveral at this interval, default 100ms
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`handle_event`**`(self, evt)` - 
+ **handle_event**`(self, evt)` - 
 
-  * **:arrow_forward: `evt:`** 
-* :small_blue_diamond: **`onUpdateTimeout`**`(self)` - 
-* :small_blue_diamond: **`onUserInput`**`(self, event)` - 
+  * **evt:** 
+ **onUpdateTimeout**`(self)` - 
+ **onUserInput**`(self, event)` - 
 
-  * **:arrow_forward: `event:`** 
-* :small_blue_diamond: **`sendState`**`(self)` - 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+  * **event:** 
+ **sendState**`(self)` - 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 
 ---
 ## RemoteInputController
 
@@ -204,23 +204,23 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`RemoteInputController`**`(self, entity, input_delay=0.1)` - 
+ **RemoteInputController**`(self, entity, input_delay=0.1)` - 
 
-  * **:arrow_forward: `entity:`** 
+  * **entity:** 
 
-  * **:arrow_forward: `input_delay:`** 
+  * **input_delay:** 
 
   
 
 
 #### Methods:
 
-* :small_blue_diamond: **`receiveState`**`(self, msg)` - 
+ **receiveState**`(self, msg)` - 
 
-  * **:arrow_forward: `msg:`** 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+  * **msg:** 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 
 
     ## User Input
 
@@ -232,13 +232,13 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`Entity`**`(self, rect=None)` - 
+ **Entity**`(self, rect=None)` - 
 
-  * **:arrow_forward: `rect:`** 
+  * **rect:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`getState`**`(self)` - get the current state of this entity
+ **getState**`(self)` - get the current state of this entity
 
   reimplement this method to support network synchronization.
 
@@ -246,13 +246,13 @@ TODO: add an option to send input events to the server
 
   
 
-* :small_blue_diamond: **`interpolateState`**`(self, state1, state2, p)` - blend two states together
+ **interpolateState**`(self, state1, state2, p)` - blend two states together
 
-  * **:arrow_forward: `state1:`** the initial state, acting as the starting point
+  * **state1:** the initial state, acting as the starting point
 
-  * **:arrow_forward: `state2:`** the target state
+  * **state2:** the target state
 
-  * **:arrow_forward: `p:`** value between zero and one representing the amount of blending.
+  * **p:** value between zero and one representing the amount of blending.
 
   reimplement this method to support network synchronization.
 
@@ -262,28 +262,28 @@ TODO: add an option to send input events to the server
 
   
 
-* :small_blue_diamond: **`onCollide`**`(self, ent, normal=None)` - called by the physics component on a collision with an entity
+ **onCollide**`(self, ent, normal=None)` - called by the physics component on a collision with an entity
 
-  * **:arrow_forward: `ent:`** 
+  * **ent:** 
 
-  * **:arrow_forward: `normal:`** 
+  * **normal:** 
 
   
 
-* :small_blue_diamond: **`paint`**`(self, surface)` - 
+ **paint**`(self, surface)` - 
 
-  * **:arrow_forward: `surface:`** 
-* :small_blue_diamond: **`setState`**`(self, state)` - set the current state of this entity
+  * **surface:** 
+ **setState**`(self, state)` - set the current state of this entity
 
-  * **:arrow_forward: `state:`** 
+  * **state:** 
 
   reimplement this method to support network synchronization.
 
   
 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 
 ---
 ## Physics2dComponent
 
@@ -291,43 +291,43 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`Physics2dComponent`**`(self, entity, map_rect=None, collision_group=None)` - 
+ **Physics2dComponent**`(self, entity, map_rect=None, collision_group=None)` - 
 
-  * **:arrow_forward: `entity:`** 
+  * **entity:** 
 
-  * **:arrow_forward: `map_rect:`** 
+  * **map_rect:** 
 
-  * **:arrow_forward: `collision_group:`** 
+  * **collision_group:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`addImpulse`**`(self, dx, dy)` - 
+ **addImpulse**`(self, dx, dy)` - 
 
-  * **:arrow_forward: `dx:`** 
+  * **dx:** 
 
-  * **:arrow_forward: `dy:`** 
-* :small_blue_diamond: **`getState`**`(self)` - 
-* :small_blue_diamond: **`interpolateState`**`(self, state1, state2, p)` - 
+  * **dy:** 
+ **getState**`(self)` - 
+ **interpolateState**`(self, state1, state2, p)` - 
 
-  * **:arrow_forward: `state1:`** 
+  * **state1:** 
 
-  * **:arrow_forward: `state2:`** 
+  * **state2:** 
 
-  * **:arrow_forward: `p:`** 
-* :small_blue_diamond: **`paint`**`(self, surface)` - 
+  * **p:** 
+ **paint**`(self, surface)` - 
 
-  * **:arrow_forward: `surface:`** 
-* :small_blue_diamond: **`reset`**`(self)` - 
-* :small_blue_diamond: **`setDirection`**`(self, vector)` - 
+  * **surface:** 
+ **reset**`(self)` - 
+ **setDirection**`(self, vector)` - 
 
-  * **:arrow_forward: `vector:`** 
-* :small_blue_diamond: **`setState`**`(self, state)` - 
+  * **vector:** 
+ **setState**`(self, state)` - 
 
-  * **:arrow_forward: `state:`** 
-* :small_blue_diamond: **`speed`**`(self)` - 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+  * **state:** 
+ **speed**`(self)` - 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 
 ---
 ## PlatformPhysics2dComponent
 
@@ -335,22 +335,22 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`PlatformPhysics2dComponent`**`(self, entity, map_rect=None, collision_group=None)` - 
+ **PlatformPhysics2dComponent**`(self, entity, map_rect=None, collision_group=None)` - 
 
-  * **:arrow_forward: `entity:`** 
+  * **entity:** 
 
-  * **:arrow_forward: `map_rect:`** 
+  * **map_rect:** 
 
-  * **:arrow_forward: `collision_group:`** 
+  * **collision_group:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`setDirection`**`(self, vector)` - 
+ **setDirection**`(self, vector)` - 
 
-  * **:arrow_forward: `vector:`** 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+  * **vector:** 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 
 ---
 ## AdventurePhysics2dComponent
 
@@ -358,22 +358,22 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`AdventurePhysics2dComponent`**`(self, entity, map_rect=None, collision_group=None)` - 
+ **AdventurePhysics2dComponent**`(self, entity, map_rect=None, collision_group=None)` - 
 
-  * **:arrow_forward: `entity:`** 
+  * **entity:** 
 
-  * **:arrow_forward: `map_rect:`** 
+  * **map_rect:** 
 
-  * **:arrow_forward: `collision_group:`** 
+  * **collision_group:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`setDirection`**`(self, vector)` - 
+ **setDirection**`(self, vector)` - 
 
-  * **:arrow_forward: `vector:`** 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+  * **vector:** 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 
 ---
 ## AnimationComponent
 
@@ -381,24 +381,24 @@ TODO: add an option to send input events to the server
 
 #### Constructor:
 
-* :small_blue_diamond: **`AnimationComponent`**`(self, entity)` - 
+ **AnimationComponent**`(self, entity)` - 
 
-  * **:arrow_forward: `entity:`** 
+  * **entity:** 
 
 #### Methods:
 
-* :small_blue_diamond: **`clear`**`(self)` - 
-* :small_blue_diamond: **`getState`**`(self)` - 
-* :small_blue_diamond: **`interpolateState`**`(self, state1, state2, p)` - 
+ **clear**`(self)` - 
+ **getState**`(self)` - 
+ **interpolateState**`(self, state1, state2, p)` - 
 
-  * **:arrow_forward: `state1:`** 
+  * **state1:** 
 
-  * **:arrow_forward: `state2:`** 
+  * **state2:** 
 
-  * **:arrow_forward: `p:`** 
-* :small_blue_diamond: **`paint`**`(self, surface)` - paint the current animation
+  * **p:** 
+ **paint**`(self, surface)` - paint the current animation
 
-  * **:arrow_forward: `surface:`** 
+  * **surface:** 
 
   if the entities visible flag is false, nothing will be drawn
 
@@ -408,52 +408,52 @@ TODO: add an option to send input events to the server
 
   
 
-* :small_blue_diamond: **`register`**`(self, images=None, animated=None, offset=None, fps=4, loop=True, onend=None, onframe=None, interuptable=True, transform=None)` - 
+ **register**`(self, images=None, animated=None, offset=None, fps=4, loop=True, onend=None, onframe=None, interuptable=True, transform=None)` - 
 
-  * **:arrow_forward: `images:`** 
+  * **images:** 
 
-  * **:arrow_forward: `animated:`** 
+  * **animated:** 
 
-  * **:arrow_forward: `offset:`** 
+  * **offset:** 
 
-  * **:arrow_forward: `fps:`** 
+  * **fps:** 
 
-  * **:arrow_forward: `loop:`** 
+  * **loop:** 
 
-  * **:arrow_forward: `onend:`** 
+  * **onend:** 
 
-  * **:arrow_forward: `onframe:`** 
+  * **onframe:** 
 
-  * **:arrow_forward: `interuptable:`** 
+  * **interuptable:** 
 
-  * **:arrow_forward: `transform:`** 
-* :small_blue_diamond: **`setAnimation`**`(self, images=None, animated=None, offset=None, fps=4, loop=True, onend=None, onframe=None, interuptable=True, transform=None)` - 
+  * **transform:** 
+ **setAnimation**`(self, images=None, animated=None, offset=None, fps=4, loop=True, onend=None, onframe=None, interuptable=True, transform=None)` - 
 
-  * **:arrow_forward: `images:`** 
+  * **images:** 
 
-  * **:arrow_forward: `animated:`** 
+  * **animated:** 
 
-  * **:arrow_forward: `offset:`** 
+  * **offset:** 
 
-  * **:arrow_forward: `fps:`** 
+  * **fps:** 
 
-  * **:arrow_forward: `loop:`** 
+  * **loop:** 
 
-  * **:arrow_forward: `onend:`** 
+  * **onend:** 
 
-  * **:arrow_forward: `onframe:`** 
+  * **onframe:** 
 
-  * **:arrow_forward: `interuptable:`** 
+  * **interuptable:** 
 
-  * **:arrow_forward: `transform:`** 
-* :small_blue_diamond: **`setAnimationById`**`(self, aid, **kwargs)` - 
+  * **transform:** 
+ **setAnimationById**`(self, aid, **kwargs)` - 
 
-  * **:arrow_forward: `aid:`** 
+  * **aid:** 
 
-  * **:arrow_forward: `kwargs:`** 
-* :small_blue_diamond: **`setState`**`(self, state)` - 
+  * **kwargs:** 
+ **setState**`(self, state)` - 
 
-  * **:arrow_forward: `state:`** 
-* :small_blue_diamond: **`update`**`(self, delta_t)` - 
+  * **state:** 
+ **update**`(self, delta_t)` - 
 
-  * **:arrow_forward: `delta_t:`** 
+  * **delta_t:** 

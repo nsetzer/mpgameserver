@@ -18,45 +18,45 @@ register functions to process events with this class. When an event is received 
 
 #### Constructor:
 
-* :small_blue_diamond: **`ServerMessageDispatcher`**`(self)` - 
+ **ServerMessageDispatcher**`(self)` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`dispatch`**`(self, client, seqnum, msg)` - call the registered method handler for an event of type msg
+ **dispatch**`(self, client, seqnum, msg)` - call the registered method handler for an event of type msg
 
-  * **:arrow_forward: `client:`** the client that sent the message
+  * **client:** the client that sent the message
 
-  * **:arrow_forward: `seqnum:`** the seqnum for the received message
+  * **seqnum:** the seqnum for the received message
 
-  * **:arrow_forward: `msg:`** the message received from the server
-
-  
-
-* :small_blue_diamond: **`register`**`(self, resource)` - register all methods of a given resource
-
-  * **:arrow_forward: `resource:`** 
+  * **msg:** the message received from the server
 
   
 
-* :small_blue_diamond: **`register_function`**`(self, event_type, fn)` - register an event handler for a given type
+ **register**`(self, resource)` - register all methods of a given resource
 
-  * **:arrow_forward: `event_type:`** 
+  * **resource:** 
 
-  * **:arrow_forward: `fn:`** 
+  
+
+ **register_function**`(self, event_type, fn)` - register an event handler for a given type
+
+  * **event_type:** 
+
+  * **fn:** 
 
   Normally you will not need to call this method directly
 
   
 
-* :small_blue_diamond: **`unregister`**`(self, resource)` - unregister all methods of a given resource
+ **unregister**`(self, resource)` - unregister all methods of a given resource
 
-  * **:arrow_forward: `resource:`** 
+  * **resource:** 
 
   
 
-* :small_blue_diamond: **`unregister_function`**`(self, event_type)` - unregister the event handler for a given type
+ **unregister_function**`(self, event_type)` - unregister the event handler for a given type
 
-  * **:arrow_forward: `event_type:`** 
+  * **event_type:** 
 
   Normally you will not need to call this method directly
 
@@ -75,43 +75,43 @@ register functions to process events with this class. When an event is received 
 
 #### Constructor:
 
-* :small_blue_diamond: **`ClientMessageDispatcher`**`(self)` - 
+ **ClientMessageDispatcher**`(self)` - 
 
 #### Methods:
 
-* :small_blue_diamond: **`dispatch`**`(self, seqnum, msg)` - call the registered method handler for an event of type msg
+ **dispatch**`(self, seqnum, msg)` - call the registered method handler for an event of type msg
 
-  * **:arrow_forward: `seqnum:`** the seqnum for the received message
+  * **seqnum:** the seqnum for the received message
 
-  * **:arrow_forward: `msg:`** the message received from the server
-
-  
-
-* :small_blue_diamond: **`register`**`(self, resource)` - register all methods of a given resource
-
-  * **:arrow_forward: `resource:`** 
+  * **msg:** the message received from the server
 
   
 
-* :small_blue_diamond: **`register_function`**`(self, event_type, fn)` - register an event handler for a given type
+ **register**`(self, resource)` - register all methods of a given resource
 
-  * **:arrow_forward: `event_type:`** 
+  * **resource:** 
 
-  * **:arrow_forward: `fn:`** 
+  
+
+ **register_function**`(self, event_type, fn)` - register an event handler for a given type
+
+  * **event_type:** 
+
+  * **fn:** 
 
   Normally you will not need to call this method directly
 
   
 
-* :small_blue_diamond: **`unregister`**`(self, resource)` - unregister all methods of a given resource
+ **unregister**`(self, resource)` - unregister all methods of a given resource
 
-  * **:arrow_forward: `resource:`** 
+  * **resource:** 
 
   
 
-* :small_blue_diamond: **`unregister_function`**`(self, event_type)` - unregister the event handler for a given type
+ **unregister_function**`(self, event_type)` - unregister the event handler for a given type
 
-  * **:arrow_forward: `event_type:`** 
+  * **event_type:** 
 
   Normally you will not need to call this method directly
 
@@ -120,9 +120,9 @@ register functions to process events with this class. When an event is received 
 
 ## :cherry_blossom: Functions:
 
-* :small_blue_diamond: **`server_event`**`(method)` - method decorator for server events
+ **server_event**`(method)` - method decorator for server events
 
-  * **:arrow_forward: `method:`** a class method to be decorated
+  * **method:** a class method to be decorated
 
   Use this decorator to mark methods of a class that can be registered as server events with ServerMessageDispatcher
 
@@ -155,9 +155,9 @@ register functions to process events with this class. When an event is received 
 
   
 
-* :small_blue_diamond: **`client_event`**`(method)` - method decorator for client events
+ **client_event**`(method)` - method decorator for client events
 
-  * **:arrow_forward: `method:`** a class method to be decorated
+  * **method:** a class method to be decorated
 
   Use this decorator to mark methods of a class that can be registered as client events with ClientMessageDispatcher
 
