@@ -28,7 +28,7 @@ import logging
 
 class EchoHandler(EventHandler):
     def __init__(self):
-        super(PingHandler, self).__init__()
+        super(EchoHandler, self).__init__()
 
     def connect(self, client):
         client.log.info("connect: %s", client)
@@ -46,7 +46,7 @@ def main():
     host = "0.0.0.0"
     port = 1474
 
-    ctxt = ServerContext(PingHandler())
+    ctxt = ServerContext(EchoHandler())
 
     server = TwistedServer(ctxt, (host, port))
 
