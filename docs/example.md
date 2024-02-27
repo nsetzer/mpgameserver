@@ -36,7 +36,7 @@ class EchoHandler(EventHandler):
     def disconnect(self, client):
         client.log.info("disconnect: %s", client)
 
-    def handle_message(self, client, msg):
+    def handle_message(self, client, seqnum, msg):
         client.send(msg)
 
 def main():
