@@ -67,19 +67,23 @@ from cryptography.hazmat.primitives.serialization import Encoding, \
     load_der_public_key, load_der_private_key, \
     load_pem_private_key, load_pem_public_key
 
-from cryptography.hazmat.backends.openssl.ec import _EllipticCurvePublicKey, _EllipticCurvePrivateKey
+try:
+    # openssl 24.0.0 no longer has these classes
+    from cryptography.hazmat.backends.openssl.ec import _EllipticCurvePublicKey, _EllipticCurvePrivateKey
 
-def public_key_repr(self):
-    b = self.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
-    return "<PublicKey:'%s'>" % binascii.hexlify(b).decode("utf-8")
+    def public_key_repr(self):
+        b = self.public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+        return "<PublicKey:'%s'>" % binascii.hexlify(b).decode("utf-8")
 
-def private_key_repr(self):
-    b = self.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
-    return "<PrivateKey:'%s'>" % binascii.hexlify(b).decode("utf-8")
+    def private_key_repr(self):
+        b = self.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
+        return "<PrivateKey:'%s'>" % binascii.hexlify(b).decode("utf-8")
 
-# monkey patch the key classes we are using for pretty printing
-_EllipticCurvePublicKey.__repr__ = public_key_repr
-_EllipticCurvePrivateKey.__repr__ = private_key_repr
+    # monkey patch the key classes we are using for pretty printing
+    _EllipticCurvePublicKey.__repr__ = public_key_repr
+    _EllipticCurvePrivateKey.__repr__ = private_key_repr
+except ModuleNotFoundError:
+    pass
 
 ENCRYPTION_KEY_LENGTH = 16
 ENCRYPTION_SALT_LENGTH = 16
