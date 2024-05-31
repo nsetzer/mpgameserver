@@ -9,16 +9,16 @@ authors = [
 keywords=["PYGAME", "MULTIPLAYER", "UDP", "SERVER"]
 readme = "README.md"
 dependencies = [
-    "twisted>=21.7.0",
-    "pyOpenSSL>=21.0.0",
-    "service_identity>=21.1.0",
-    "cryptography>=3.0",
+    "twisted>=24.3.0",
+    "pyOpenSSL>=24.1.0",
+    "service_identity>=24.1.0",
+    "cryptography>=42.0.7",
 ]
 
 [project.optional-dependencies]
 pygame = [
-    "pygame>=2.0.0",
-    "pillow>=7.2.0",
+    "pygame>=2.5.2",
+    "pillow>=10.3.0",
 ]
 dev = [
     "grip>=4.5.2",
