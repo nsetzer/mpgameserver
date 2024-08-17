@@ -1,4 +1,7 @@
 #! cd .. && python -m demo.pong2_launcher
+# Windows only launcher.
+# 
+
 import os
 import sys
 import datetime
@@ -91,7 +94,12 @@ proc2 = subprocess.Popen(args2, stdin=subprocess.DEVNULL)
 
 procs = [proc1, proc2]
 
-hwnds =get_proc_hwnd(procs)
+hwnds = get_proc_hwnd(procs)
+
+if hwnds is None or len(hwnds) == 0:
+    sys.stderr.write("failed to enumerate child processes\n")
+
+    exit(1)
 
 for idx, (hwnd, cpid, rect) in enumerate(hwnds):
     print(hwnd, cpid, rect)
@@ -105,5 +113,6 @@ for idx, (hwnd, cpid, rect) in enumerate(hwnds):
     y1 = (1080 - h)//2 #center
     win32gui.SetWindowPos(hwnd, 0, x1, y1, w, h, win32con.SWP_SHOWWINDOW)
 
-wait_till_done(procs)
+    wait_till_done(procs)
+
 
