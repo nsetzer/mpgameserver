@@ -1,6 +1,6 @@
 [project]
 name = "mpgameserver"
-version = "0.2.3"
+version = "0.2.4"
 description="Python Multiplayer Game Server"
 requires-python = ">=3.8"
 authors = [
