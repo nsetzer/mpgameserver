@@ -124,8 +124,6 @@ class MainScene(pylon.GameScene):
             print(msg)
             raise RuntimeError()
 
-        print("build input", CLIENT_ID)
-
         ent0.requires_update = True
         ent1.requires_update = True # reset by input controller
 

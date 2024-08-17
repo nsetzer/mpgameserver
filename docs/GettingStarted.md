@@ -38,7 +38,7 @@ class MyGameEventHandler(EventHandler):
     def update(self, delta_t):
         pass
 
-    def handle_message(self, client, msg):
+    def handle_message(self, client, seqnum, msg):
         pass
 
 def main():
